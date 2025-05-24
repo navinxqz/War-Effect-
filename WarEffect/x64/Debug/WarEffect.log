@@ -1,0 +1,11 @@
+﻿Source.obj : error LNK2019: unresolved external symbol glutInit referenced in function main
+Source.obj : error LNK2019: unresolved external symbol glutInitDisplayMode referenced in function main
+Source.obj : error LNK2019: unresolved external symbol glutInitWindowSize referenced in function main
+Source.obj : error LNK2019: unresolved external symbol glutMainLoop referenced in function main
+Source.obj : error LNK2019: unresolved external symbol glutCreateWindow referenced in function main
+Source.obj : error LNK2019: unresolved external symbol glutPostRedisplay referenced in function "void __cdecl update(int)" (?update@@YAXH@Z)
+Source.obj : error LNK2019: unresolved external symbol glutSwapBuffers referenced in function "void __cdecl display(void)" (?display@@YAXXZ)
+Source.obj : error LNK2019: unresolved external symbol glutDisplayFunc referenced in function main
+Source.obj : error LNK2019: unresolved external symbol glutTimerFunc referenced in function "void __cdecl update(int)" (?update@@YAXH@Z)
+D:\Basic Softwares\Microsoft Visual Studio\2022\Community\VC\Auxiliary\VS\lib\x64\glut32.lib : warning LNK4272: library machine type 'x86' conflicts with target machine type 'x64'
+D:\Versity space\Project\WarEffect\x64\Debug\WarEffect.exe : fatal error LNK1120: 9 unresolved externals
