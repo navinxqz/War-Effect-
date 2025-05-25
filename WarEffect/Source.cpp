@@ -4,15 +4,20 @@
 #include <cmath>
 
 GLuint sceneTexture, tankTexture;
-int tankImgWidth, tankImgHeight;
+int tankImgWidth, tankImgHeight, missileTexture;
 
-float tankX = 1.5f;
-float tankY = 0.28f;
+float tankX = 1.2f;
+float tankY = 0.18f;
 float tankSpeedX = -0.002f;
-float tankSpeedY = -0.001f;
-bool stopAtCenter = false;
+float tankSpeedY = -0.00105f;
+bool stop = false;
+int missileImgWidth, missileImgHeight;
 
 float flameTime = 0.0f; // For flickering animation
+
+//missile variables
+float missileX = -1.2f, missileY = 0.3f;
+float missileSpeedX = 0.005, missileSpeedY = 0.0025f;
 
 // Fixed flame positions on buildings
 struct FlamePos {
@@ -107,6 +112,20 @@ void display() {
     glEnd();
     glPopMatrix();
 
+    //missile
+    glPushMatrix();
+    glTranslatef(missileX, missileY, 0);
+    glBindTexture(GL_TEXTURE_2D, missileTexture);
+    float missileAspect = (float)missileImgWidth / missileImgHeight;
+    float pw = 0.2f, ph = pw / missileAspect;
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex2f(-pw / 2, -ph / 2);
+    glTexCoord2f(1, 0); glVertex2f(pw / 2, -ph / 2);
+    glTexCoord2f(1, 1); glVertex2f(pw / 2, ph / 2);
+    glTexCoord2f(0, 1); glVertex2f(-pw / 2, ph / 2);
+    glEnd();
+    glPopMatrix();
+
     glDisable(GL_TEXTURE_2D);
 
     // Draw flames at building positions
@@ -120,15 +139,16 @@ void display() {
 void update(int value) {
     flameTime += 0.1f; // Animate flicker
 
-    if (!stopAtCenter) {
+    if (!stop) {
         tankX += tankSpeedX;
         tankY += tankSpeedY;
-        if (tankX <= 0.0f && tankY <= -0.4f) {
-            tankX = 0.0f;
-            tankY = -0.4f;
-            stopAtCenter = true;
+        if (tankX <= 0.2f ) {
+            stop = true;
         }
     }
+    missileX += missileSpeedX;
+    missileY += missileSpeedY;
+
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
@@ -142,6 +162,7 @@ void init() {
 
     sceneTexture = loadTexture("./assets/scene3.png");
     tankTexture = loadTexture("./assets/tankangle.png", &tankImgWidth, &tankImgHeight);
+    missileTexture = loadTexture("./assets/Missile.png", &missileImgWidth, &missileImgHeight);
 }
 
 int main(int argc, char** argv) {
