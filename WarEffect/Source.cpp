@@ -140,8 +140,8 @@ void init() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    sceneTexture = loadTexture("scene3.png");
-    tankTexture = loadTexture("truck.png", &tankImgWidth, &tankImgHeight);
+    sceneTexture = loadTexture("./assets/scene3.png");
+    tankTexture = loadTexture("./assets/tankObj.png", &tankImgWidth, &tankImgHeight);
 }
 
 int main(int argc, char** argv) {
