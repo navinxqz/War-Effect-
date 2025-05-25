@@ -141,7 +141,7 @@ void init() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     sceneTexture = loadTexture("./assets/scene3.png");
-    tankTexture = loadTexture("./assets/tankObj.png", &tankImgWidth, &tankImgHeight);
+    tankTexture = loadTexture("./assets/tankangle.png", &tankImgWidth, &tankImgHeight);
 }
 
 int main(int argc, char** argv) {
