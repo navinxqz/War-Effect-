@@ -3,21 +3,26 @@
 #include "stb_image.h"
 #include <cmath>
 
-GLuint sceneTexture, tankTexture;
-int tankImgWidth, tankImgHeight, missileTexture;
-
-float tankX = 1.2f;
-float tankY = 0.18f;
-float tankSpeedX = -0.002f;
-float tankSpeedY = -0.00105f;
-bool stop = false;
+GLuint sceneTexture, tankTexture, missileTexture, copperTexture;
+int tankImgWidth, tankImgHeight;
 int missileImgWidth, missileImgHeight;
+int copperImgWidth, copperImgHeight;
 
-float flameTime = 0.0f; // For flickering animation
+//tank variables
+float tankX = 1.2f, tankY = 0.18f;
+float tankSpeedX = -0.002f, tankSpeedY = -0.00105f;
+bool stop = false;
 
 //missile variables
 float missileX = -1.2f, missileY = 0.3f;
-float missileSpeedX = 0.005, missileSpeedY = 0.0025f;
+float missileSpeedX = 0.009, missileSpeedY = 0.0065f;
+
+//copper variables
+float copperX = -0.9f, copperY = -0.1f;
+float copperSpeedX = 0.004, copperSpeedY = 0.0035f;
+float rotorAngle = 0.0f;
+
+float flameTime = 0.0f; // For flickering animation
 
 // Fixed flame positions on buildings
 struct FlamePos {
@@ -126,6 +131,61 @@ void display() {
     glEnd();
     glPopMatrix();
 
+    //copper
+    /*glPushMatrix();
+    glTranslatef(copperX, copperY, 0);
+    glBindTexture(GL_TEXTURE_2D, copperTexture);
+    float copperAspect = (float)copperImgWidth / copperImgHeight;
+    float cw = 0.3f, ch = cw / copperAspect;
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex2f(-cw / 2, -ch / 2);
+    glTexCoord2f(1, 0); glVertex2f(cw / 2, -ch / 2);
+    glTexCoord2f(1, 1); glVertex2f(cw / 2, ch / 2);
+    glTexCoord2f(0, 1); glVertex2f(-cw / 2, ch / 2);
+    glEnd();
+    glPopMatrix();*/
+
+    // copper + rotor
+    float copperAspect = (float)copperImgWidth / copperImgHeight;
+    float cw = 0.3f, ch = cw / copperAspect;
+
+    glPushMatrix();
+    glTranslatef(copperX, copperY + ch / 2 + 0.02f, 0.0f);
+
+    // Draw copper texture
+    glBindTexture(GL_TEXTURE_2D, copperTexture);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex2f(-cw / 2, -ch / 2);
+    glTexCoord2f(1, 0); glVertex2f(cw / 2, -ch / 2);
+    glTexCoord2f(1, 1); glVertex2f(cw / 2, ch / 2);
+    glTexCoord2f(0, 1); glVertex2f(-cw / 2, ch / 2);
+    glEnd();
+
+    glPushMatrix();
+    glTranslatef(0.03f, ch / 2 -0.05, 0.0f);
+    glRotatef(rotorAngle, 0, 0, 1);
+    glDisable(GL_TEXTURE_2D);
+
+    glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
+    glBegin(GL_QUADS);
+    // Horizontal blade
+    glVertex2f(-0.15f, -0.005f);
+    glVertex2f(0.15f, -0.005f);
+    glVertex2f(0.15f, 0.005f);
+    glVertex2f(-0.15f, 0.005f);
+    // Vertical blade
+    glVertex2f(-0.005f, -0.15f);
+    glVertex2f(0.005f, -0.15f);
+    glVertex2f(0.005f, 0.15f);
+    glVertex2f(-0.005f, 0.15f);
+    glEnd();
+
+    glEnable(GL_TEXTURE_2D); // Re-enable for next draw
+    glPopMatrix(); // End rotor
+
+    glPopMatrix(); // End of copper+rotor
+
+
     glDisable(GL_TEXTURE_2D);
 
     // Draw flames at building positions
@@ -149,6 +209,11 @@ void update(int value) {
     missileX += missileSpeedX;
     missileY += missileSpeedY;
 
+    copperX += copperSpeedX;
+    copperY += copperSpeedY;
+    rotorAngle += 10.0f;
+    if (rotorAngle > 360.0f)rotorAngle -= 360.0f;
+
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
@@ -163,6 +228,7 @@ void init() {
     sceneTexture = loadTexture("./assets/scene3.png");
     tankTexture = loadTexture("./assets/tankangle.png", &tankImgWidth, &tankImgHeight);
     missileTexture = loadTexture("./assets/Missile.png", &missileImgWidth, &missileImgHeight);
+    copperTexture = loadTexture("./assets/copperback.png", &copperImgWidth, &copperImgHeight);
 }
 
 int main(int argc, char** argv) {
