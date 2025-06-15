@@ -7,11 +7,12 @@
 #include <mmsystem.h>
 #pragma comment(lib,"Winmm.lib")
 
-GLuint sceneTexture, tankTexture, missileTexture, copperTexture, fireTexture; // Added fireTexture
+GLuint sceneTexture, tankTexture, missileTexture, copperTexture, fireTexture, artilleryTexture;
 int tankImgWidth, tankImgHeight;
 int missileImgWidth, missileImgHeight;
 int copperImgWidth, copperImgHeight;
-int fireImgWidth, fireImgHeight; // Added fire image dimensions
+int fireImgWidth, fireImgHeight;
+int artilleryImgWidth, artilleryImgHeight;
 
 // Tank variables
 float tankX = 1.2f, tankY = 0.18f;
@@ -19,9 +20,8 @@ float tankSpeedX = -0.002f, tankSpeedY = -0.00105f;
 bool stop = false;
 
 // Tank fire
-float fireOffsetX = -0.1f;
-float fireOffsetY = 0.12f;
-bool fireVisible = false; // Track fire visibility
+float fireOffsetX = -0.1f, fireOffsetY = 0.12f;
+bool fireVisible = false;
 
 // Missile variables
 float missileX = -1.2f, missileY = 0.3f;
@@ -32,8 +32,16 @@ float copperX = -0.9f, copperY = -0.1f;
 float copperSpeedX = 0.004, copperSpeedY = 0.0035f;
 float rotorAngle = 0.0f;
 
+// Artillery gun variables
+float artilleryX = -0.0f, artilleryY = -0.8f;
+
+// Artillery fire
+bool artilleryFireVisible = false;
+float artilleryFireOffsetX = -0.15f, artilleryFireOffsetY = 0.15f;
+
+
 // Flame variables
-float flameTime = 0.0f; // Declare flameTime
+float flameTime = 0.0f;
 
 // Fixed flame positions on buildings
 struct FlamePos {
@@ -71,12 +79,11 @@ GLuint loadTexture(const char* filename, int* outWidth = nullptr, int* outHeight
 
 // Forward declaration of the function to change fire texture
 void changeFireTexture(int value);
+void hideFireTexture(int value);
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
-
-    // Enable texturing
     glEnable(GL_TEXTURE_2D);
 
     // Draw background
@@ -88,20 +95,16 @@ void display() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(-1.0f, 1.0f);
     glEnd();
 
-    // Check if fire should be visible
+    // Check fire visible
     if (fireVisible) {
         glPushMatrix();
-        // Translate fire texture position with offsets applied
         glTranslatef(tankX + fireOffsetX, tankY + fireOffsetY, 0.0f);
-        // Bind the fire texture
         glBindTexture(GL_TEXTURE_2D, fireTexture);
 
-        // Calculate fire texture aspect ratio and size (adjust fireWidth as needed)
         float fireAspect = (float)fireImgWidth / (float)fireImgHeight;
-        float fireWidth = 0.4f;  // Example width
+        float fireWidth = 0.4f;
         float fireHeight = fireWidth / fireAspect;
 
-        // Draw a textured quad for the fire texture
         glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 0.0f); glVertex2f(-fireWidth / 2, -fireHeight / 2);
         glTexCoord2f(1.0f, 0.0f); glVertex2f(fireWidth / 2, -fireHeight / 2);
@@ -126,6 +129,37 @@ void display() {
     glTexCoord2f(0.0f, 1.0f); glVertex2f(-displayWidth / 2, displayHeight / 2);
     glEnd();
     glPopMatrix();
+
+    // Draw artillery gun
+    glPushMatrix();
+    glTranslatef(artilleryX, artilleryY, 0.0f);
+    glBindTexture(GL_TEXTURE_2D, artilleryTexture);
+    float artAspect = (float)artilleryImgWidth / artilleryImgHeight;
+    float artWidth = 0.3f;
+    float artHeight = artWidth / artAspect;
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex2f(-artWidth / 2, -artHeight / 2);
+    glTexCoord2f(1, 0); glVertex2f(artWidth / 2, -artHeight / 2);
+    glTexCoord2f(1, 1); glVertex2f(artWidth / 2, artHeight / 2);
+    glTexCoord2f(0, 1); glVertex2f(-artWidth / 2, artHeight / 2);
+    glEnd();
+    glPopMatrix();
+
+    if (artilleryFireVisible) {
+        glPushMatrix();
+        glTranslatef(artilleryX + artilleryFireOffsetX, artilleryY + artilleryFireOffsetY, 0.0f);
+        glBindTexture(GL_TEXTURE_2D, fireTexture); // Reuse the same fireTexture
+        float fireAspect = (float)fireImgWidth / (float)fireImgHeight;
+        float fireWidth = 0.4f;
+        float fireHeight = fireWidth / fireAspect;
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(-fireWidth / 2, -fireHeight / 2);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(fireWidth / 2, -fireHeight / 2);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(fireWidth / 2, fireHeight / 2);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(-fireWidth / 2, fireHeight / 2);
+        glEnd();
+        glPopMatrix();
+    }
 
     // Missile
     glPushMatrix();
@@ -187,40 +221,45 @@ void display() {
     }
     glutSwapBuffers();
 }
+void changeFireTexture(int value);
 void hideFireTexture(int value);
-// Add a flag to track fire sequence state
+
+//bool fireVisible = false;
+//float flameTime = 0.0f;
 bool fireSequenceActive = false;
 
 void update(int value) {
-    flameTime += 0.1f; // Animate flicker
+    flameTime += 0.1f;
 
     if (!stop) {
         tankX += tankSpeedX;
         tankY += tankSpeedY;
         if (tankX <= 0.2f) {
             stop = true;
-            // Show initial fire immediately
+
             fireVisible = true;
             if (fireTexture != 0) {
                 glDeleteTextures(1, &fireTexture);
             }
             fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
-            // Schedule texture change after 3 seconds to TankFire2.png
-            glutTimerFunc(1000, changeFireTexture, 0);
-            fireSequenceActive = true; // Mark fire sequence as active
+            glutTimerFunc(500, changeFireTexture, 0);
+            fireSequenceActive = true;
         }
     }
-    else if (fireSequenceActive) {
-        // After 5 seconds, hide the fire texture
-        glutTimerFunc(2500, hideFireTexture, 0); // Hide fire texture after 2500ms
-        fireSequenceActive = false; // Reset the fire sequence state
+    else if (fireSequenceActive){
+        glutTimerFunc(1000, hideFireTexture, 0); 
+        fireSequenceActive = false;
     }
-
     missileX += missileSpeedX;
     missileY += missileSpeedY;
 
     copperX += copperSpeedX;
     copperY += copperSpeedY;
+
+    if (copperX > 1.0f) {
+        copperX = -1.0f;
+        copperY = -0.4f;
+    }
     rotorAngle += 10.0f;
     if (rotorAngle > 360.0f) rotorAngle -= 360.0f;
 
@@ -228,47 +267,48 @@ void update(int value) {
     glutTimerFunc(16, update, 0);
 }
 
-// Function to change the fire texture after delay
 void changeFireTexture(int value) {
-    // Delete old texture first (optional cleanup)
     if (fireTexture != 0) {
         glDeleteTextures(1, &fireTexture);
     }
-    // Load new fire texture image (adjust path accordingly)
-    fireTexture = loadTexture("./assets/TankFire2.png", &fireImgWidth, &fireImgHeight); // Load new fire texture
+    fireTexture = loadTexture("./assets/TankFire2.png", &fireImgWidth, &fireImgHeight);
     glutPostRedisplay();
 }
-
-// Function to hide the fire texture after 5 seconds
 void hideFireTexture(int value) {
-    fireVisible = false; // Hide fire texture
+    fireVisible = false;
     glutPostRedisplay();
 }
+//sound part
 void playTankFireSound() {
     PlaySound(TEXT("./assets/tankfire7.wav"), NULL, SND_FILENAME | SND_ASYNC);
 }
-
-// Keyboard callback to listen for 'F' key press
+void playArtilleryFireSound() {
+    PlaySound(TEXT("./assets/tankfire1.wav"), NULL, SND_FILENAME | SND_ASYNC);
+}
+//keyboard part
 void keyboard(unsigned char key, int x, int y) {
-    if (key == 'F' || key == 'f') {
-        // Show TankFire1.png immediately
+    if (key == 'F' || key == 'f'){
+
         fireVisible = true;
-        if (fireTexture != 0) {
-            glDeleteTextures(1, &fireTexture);
-        }
+        if (fireTexture != 0){ glDeleteTextures(1, &fireTexture); }
         fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
         playTankFireSound();
-        // Schedule TankFire2.png after 1000ms
+
         glutTimerFunc(1000, changeFireTexture, 0);
-
-        // Schedule hiding fire after 2500ms (1000 + 2500)
         glutTimerFunc(2000, hideFireTexture, 0);
+        glutPostRedisplay();
+    }
+    else if(key == 'G' || key == 'g') {
+        artilleryFireVisible = true;
+        fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
+        playArtilleryFireSound();
 
+        glutTimerFunc(1000, [](int) { artilleryFireVisible = false; glutPostRedisplay(); }, 0);
         glutPostRedisplay();
     }
 }
 void init() {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0,0,0,1);
     stbi_set_flip_vertically_on_load(true);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -277,10 +317,10 @@ void init() {
     tankTexture = loadTexture("./assets/tankangle.png", &tankImgWidth, &tankImgHeight);
     missileTexture = loadTexture("./assets/Missile.png", &missileImgWidth, &missileImgHeight);
     copperTexture = loadTexture("./assets/copperback.png", &copperImgWidth, &copperImgHeight);
-    fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight); // Load initial fire texture
+    fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
+    artilleryTexture = loadTexture("./assets/artillery-gun.png", &artilleryImgWidth, &artilleryImgHeight);
 
     glutKeyboardFunc(keyboard);
-
 }
 
 int main(int argc, char** argv) {
