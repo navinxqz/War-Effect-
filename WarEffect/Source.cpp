@@ -1,6 +1,8 @@
 #include <GL/glut.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <irrKlang.h>
+using namespace irrklang;
 #include <cmath>
 #include <math.h>
 #include <Windows.h>
@@ -17,6 +19,7 @@ int fireImgWidth, fireImgHeight;
 int artilleryImgWidth, artilleryImgHeight;
 
 int current = 1;
+ISoundEngine* engine = nullptr;
 
 // Tank variables
 float tankX = 1.2f, tankY = 0.18f;
@@ -318,16 +321,20 @@ bool copperSoundPlaying = false;
 
 //sound part
 void playTankFireSound() {
-    PlaySound(TEXT("./assets/tankfire7.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    //PlaySound(TEXT("./assets/tankfire7.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    engine->play2D("assets/tankfire7.wav", false);
 }
 void playArtilleryFireSound() {
-    PlaySound(TEXT("./assets/tankfire1.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    //PlaySound(TEXT("./assets/tankfire1.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    engine->play2D("assets/tankfire1.wav", false);
 }
 void copperSound() {
-    PlaySound(TEXT("./assets/copper.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    //PlaySound(TEXT("./assets/copper.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    engine->play2D("assets/copper.wav", false);
 }
 void playRainSound() {
-    PlaySound(TEXT("./assets/rain.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+    //PlaySound(TEXT("./assets/rain.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+    engine->play2D("assets/rain.wav", true);
 }
 
 void update(int value) {
@@ -410,7 +417,9 @@ void hideFireTexture(int value) {
 void keyboard(unsigned char key, int x, int y) {
     if (key == '1') {
         current = 1;
-        PlaySound(NULL, NULL, 0);
+        //PlaySound(NULL, NULL, 0);
+        engine->stopAllSounds();
+
     }
     else if (key == '2') {
         current = 2;
@@ -445,6 +454,10 @@ void init() {
     stbi_set_flip_vertically_on_load(true);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    engine = createIrrKlangDevice();
+    if (!engine) {
+        printf("Failed to create sound engine.\n");
+    }
 
     sceneTexture = loadTexture("./assets/scene3.png");
     scene2Texture = loadTexture("./assets/rainy.png");
