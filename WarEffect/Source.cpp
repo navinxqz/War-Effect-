@@ -145,6 +145,7 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     glEnable(GL_TEXTURE_2D);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     if (current == 1) {
         glBindTexture(GL_TEXTURE_2D, sceneTexture);
@@ -188,37 +189,39 @@ void display() {
     }
 
     // Draw tank
-    glPushMatrix();
-    glTranslatef(tankX, tankY, 0.0f);
-    glBindTexture(GL_TEXTURE_2D, tankTexture);
-    float aspect = (float)tankImgWidth / (float)tankImgHeight;
-    float displayWidth = 0.4f;
-    float displayHeight = displayWidth / aspect;
+    if (current == 1) {
+        glPushMatrix();
+        glTranslatef(tankX, tankY, 0.0f);
+        glBindTexture(GL_TEXTURE_2D, tankTexture);
+        float aspect = (float)tankImgWidth / (float)tankImgHeight;
+        float displayWidth = 0.4f;
+        float displayHeight = displayWidth / aspect;
 
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(-displayWidth / 2, -displayHeight / 2);
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(displayWidth / 2, -displayHeight / 2);
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(displayWidth / 2, displayHeight / 2);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(-displayWidth / 2, displayHeight / 2);
-    glEnd();
-    glPopMatrix();
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(-displayWidth / 2, -displayHeight / 2);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(displayWidth / 2, -displayHeight / 2);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(displayWidth / 2, displayHeight / 2);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(-displayWidth / 2, displayHeight / 2);
+        glEnd();
+        glPopMatrix();
 
-    // Draw new tank
-    glPushMatrix();
-    glTranslatef(newTankX, newTankY, 0.0f);
-    glBindTexture(GL_TEXTURE_2D, newTankTexture);
-    float newTankAspect = (float)newTankImgWidth / (float)newTankImgHeight;
-    float newTankDisplayWidth = 0.2f;
-    float newTankDisplayHeight = newTankDisplayWidth / newTankAspect;
+        // Draw new tank
+        glPushMatrix();
+        glTranslatef(newTankX, newTankY, 0.0f);
+        glBindTexture(GL_TEXTURE_2D, newTankTexture);
+        float newTankAspect = (float)newTankImgWidth / (float)newTankImgHeight;
+        float newTankDisplayWidth = 0.2f;
+        float newTankDisplayHeight = newTankDisplayWidth / newTankAspect;
 
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(-newTankDisplayWidth / 2, -newTankDisplayHeight / 2);
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(newTankDisplayWidth / 2, -newTankDisplayHeight / 2);
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(newTankDisplayWidth / 2, newTankDisplayHeight / 2);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(-newTankDisplayWidth / 2, newTankDisplayHeight / 2);
-    glEnd();
-    glPopMatrix();
-
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(-newTankDisplayWidth / 2, -newTankDisplayHeight / 2);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(newTankDisplayWidth / 2, -newTankDisplayHeight / 2);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(newTankDisplayWidth / 2, newTankDisplayHeight / 2);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(-newTankDisplayWidth / 2, newTankDisplayHeight / 2);
+        glEnd();
+        glPopMatrix();
+    }
+    
     // Draw artillery gun
     glPushMatrix();
     glTranslatef(artilleryX, artilleryY, 0.0f);
@@ -265,44 +268,46 @@ void display() {
     glPopMatrix();
 
     // Copper + rotor
-    float copperAspect = (float)copperImgWidth / copperImgHeight;
-    float cw = 0.3f, ch = cw / copperAspect;
+    if (current == 1) {
+        float copperAspect = (float)copperImgWidth / copperImgHeight;
+        float cw = 0.3f, ch = cw / copperAspect;
 
-    glPushMatrix();
-    glTranslatef(copperX, copperY + ch / 2 + 0.02f, 0.0f);
+        glPushMatrix();
+        glTranslatef(copperX, copperY + ch / 2 + 0.02f, 0.0f);
 
-    // Draw copper texture
-    glBindTexture(GL_TEXTURE_2D, copperTexture);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0, 0); glVertex2f(-cw / 2, -ch / 2);
-    glTexCoord2f(1, 0); glVertex2f(cw / 2, -ch / 2);
-    glTexCoord2f(1, 1); glVertex2f(cw / 2, ch / 2);
-    glTexCoord2f(0, 1); glVertex2f(-cw / 2, ch / 2);
-    glEnd();
+        // Draw copper texture
+        glBindTexture(GL_TEXTURE_2D, copperTexture);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0); glVertex2f(-cw / 2, -ch / 2);
+        glTexCoord2f(1, 0); glVertex2f(cw / 2, -ch / 2);
+        glTexCoord2f(1, 1); glVertex2f(cw / 2, ch / 2);
+        glTexCoord2f(0, 1); glVertex2f(-cw / 2, ch / 2);
+        glEnd();
 
-    glPushMatrix();
-    glTranslatef(0.03f, ch / 2 - 0.05, 0.0f);
-    glRotatef(rotorAngle, 0.0f, 0.0f, 1.0f);
-    glDisable(GL_TEXTURE_2D);
+        glPushMatrix();
+        glTranslatef(0.03f, ch / 2 - 0.05, 0.0f);
+        glRotatef(rotorAngle, 0.0f, 0.0f, 1.0f);
+        glDisable(GL_TEXTURE_2D);
 
-    glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
-    glBegin(GL_QUADS);
-    // Horizontal blade
-    glVertex2f(-0.15f, -0.005f);
-    glVertex2f(0.15f, -0.005f);
-    glVertex2f(0.15f, 0.005f);
-    glVertex2f(-0.15f, 0.005f);
-    // Vertical blade
-    glVertex2f(-0.005f, -0.15f);
-    glVertex2f(0.005f, -0.15f);
-    glVertex2f(0.005f, 0.15f);
-    glVertex2f(-0.005f, 0.15f);
-    glEnd();
+        glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
+        glBegin(GL_QUADS);
+        // Horizontal blade
+        glVertex2f(-0.15f, -0.005f);
+        glVertex2f(0.15f, -0.005f);
+        glVertex2f(0.15f, 0.005f);
+        glVertex2f(-0.15f, 0.005f);
+        // Vertical blade
+        glVertex2f(-0.005f, -0.15f);
+        glVertex2f(0.005f, -0.15f);
+        glVertex2f(0.005f, 0.15f);
+        glVertex2f(-0.005f, 0.15f);
+        glEnd();
 
-    glEnable(GL_TEXTURE_2D); // Re-enable for next draw
-    glPopMatrix(); // End rotor
-    glPopMatrix(); // End of copper+rotor
-    glDisable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_2D); // Re-enable for next draw
+        glPopMatrix(); // End rotor
+        glPopMatrix(); // End of copper+rotor
+        glDisable(GL_TEXTURE_2D);
+    }
 
     // Draw flames at building positions
     for (int i = 0; i < flameCount; i++) {
@@ -324,6 +329,10 @@ void playTankFireSound() {
     //PlaySound(TEXT("./assets/tankfire7.wav"), NULL, SND_FILENAME | SND_ASYNC);
     engine->play2D("assets/tankfire7.wav", false);
 }
+void playSiren() {
+    //PlaySound(TEXT("./assets/tankfire7.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    engine->play2D("assets/siren.wav", true);
+}
 void playArtilleryFireSound() {
     //PlaySound(TEXT("./assets/tankfire1.wav"), NULL, SND_FILENAME | SND_ASYNC);
     engine->play2D("assets/tankfire1.wav", false);
@@ -342,44 +351,49 @@ void update(int value) {
         updateRain();
     }
     flameTime += 0.1f;
-    newTankX += tankSpeedX;
-    newTankY += tankSpeedY;
+    if (current == 1) {
+        newTankX += tankSpeedX;
+        newTankY += tankSpeedY;
 
-    if (!stop) {
-        tankX += tankSpeedX;
-        tankY += tankSpeedY;
+        if (!stop) {
+            tankX += tankSpeedX;
+            tankY += tankSpeedY;
 
-        if (tankX <= 0.2f) {
-            stop = true;
+            if (tankX <= 0.2f) {
+                stop = true;
 
-            fireVisible = true;
-            if (fireTexture != 0) {
-                glDeleteTextures(1, &fireTexture);
+                fireVisible = true;
+                if (fireTexture != 0) {
+                    glDeleteTextures(1, &fireTexture);
+                }
+                fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
+                glutTimerFunc(500, changeFireTexture, 0);
+                fireSequenceActive = true;
             }
-            fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
-            glutTimerFunc(500, changeFireTexture, 0);
-            fireSequenceActive = true;
+        }
+        else if (fireSequenceActive) {
+            glutTimerFunc(1000, hideFireTexture, 0);
+            fireSequenceActive = false;
         }
     }
-    else if (fireSequenceActive){
-        glutTimerFunc(1000, hideFireTexture, 0); 
-        fireSequenceActive = false;
-    }
+    
     missileX += missileSpeedX;
     missileY += missileSpeedY;
 
-    copperX += copperSpeedX;
-    copperY += copperSpeedY;
-
-    if (copperX > -1.0f && copperX < 0.45f){
-        if (!copperSoundPlaying) {
-            copperSound();
-            copperSoundPlaying = true;
+    if (current == 1) {
+        copperX += copperSpeedX;
+        copperY += copperSpeedY;
+        if (copperX > -1.0f && copperX < 0.45f) {
+            if (!copperSoundPlaying) {
+                copperSound();
+                copperSoundPlaying = true;
+            }
         }
-    }else {
-        if (copperSoundPlaying) {
-            PlaySound(NULL, NULL, 0);
-            copperSoundPlaying = false;
+        else {
+            if (copperSoundPlaying) {
+                PlaySound(NULL, NULL, 0);
+                copperSoundPlaying = false;
+            }
         }
     }
 
@@ -419,10 +433,12 @@ void keyboard(unsigned char key, int x, int y) {
         current = 1;
         //PlaySound(NULL, NULL, 0);
         engine->stopAllSounds();
+        playSiren();
 
     }
     else if (key == '2') {
         current = 2;
+        engine->stopAllSounds();
         initRain();
         playRainSound();
     }
