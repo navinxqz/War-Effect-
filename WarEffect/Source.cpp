@@ -10,13 +10,14 @@ using namespace irrklang;
 
 #pragma comment(lib,"Winmm.lib")
 
-GLuint sceneTexture, scene2Texture, tankTexture, newTankTexture, missileTexture, copperTexture, fireTexture, artilleryTexture;
+GLuint sceneTexture, scene2Texture, tankTexture, newTankTexture, missileTexture, copperTexture, fireTexture, artilleryTexture, truckTexture;
 int tankImgWidth, tankImgHeight;
 int newTankImgWidth, newTankImgHeight;
 int missileImgWidth, missileImgHeight;
 int copperImgWidth, copperImgHeight;
 int fireImgWidth, fireImgHeight;
 int artilleryImgWidth, artilleryImgHeight;
+int truckImgWidth, truckImgHeight;
 
 int current = 1;
 ISoundEngine* engine = nullptr;
@@ -52,6 +53,10 @@ float cameraShakeOffsetX = 0.0f;
 float cameraShakeOffsetY = 0.0f;
 int cameraShakeFramesLeft = 0;
 const int maxShakeFrames = 6;
+
+//truck variables
+float truckX = 0.9f, truckY = -0.0f;
+float truckSpeedX = 0.004f, truckSpeedY = 0.003f;
 
 
 // Flame variables
@@ -187,14 +192,13 @@ void display() {
         glEnd();
         glPopMatrix();
     }
-
     // Draw tank
     if (current == 1) {
         glPushMatrix();
         glTranslatef(tankX, tankY, 0.0f);
         glBindTexture(GL_TEXTURE_2D, tankTexture);
         float aspect = (float)tankImgWidth / (float)tankImgHeight;
-        float displayWidth = 0.4f;
+        float displayWidth = 0.43f;
         float displayHeight = displayWidth / aspect;
 
         glBegin(GL_QUADS);
@@ -221,7 +225,22 @@ void display() {
         glEnd();
         glPopMatrix();
     }
-    
+    if (current == 2) {
+        glPushMatrix();
+        glTranslatef(truckX, truckY, 0.0f);
+        glBindTexture(GL_TEXTURE_2D, truckTexture);
+        float truckAspect = (float)truckImgWidth / (float)truckImgHeight;
+        float truckDisplayWidth = 0.3f;
+        float truckDisplayHeight = truckDisplayWidth / truckAspect;
+
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(-truckDisplayWidth / 2, -truckDisplayHeight / 2);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(truckDisplayWidth / 2, -truckDisplayHeight / 2);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(truckDisplayWidth / 2, truckDisplayHeight / 2);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(-truckDisplayWidth / 2, truckDisplayHeight / 2);
+        glEnd();
+        glPopMatrix();
+    }
     // Draw artillery gun
     glPushMatrix();
     glTranslatef(artilleryX, artilleryY, 0.0f);
@@ -252,7 +271,6 @@ void display() {
         glEnd();
         glPopMatrix();
     }
-
     // Missile
     glPushMatrix();
     glTranslatef(missileX, missileY, 0);
@@ -338,17 +356,28 @@ void playArtilleryFireSound() {
     engine->play2D("assets/tankfire1.wav", false);
 }
 void copperSound() {
-    //PlaySound(TEXT("./assets/copper.wav"), NULL, SND_FILENAME | SND_ASYNC);
     engine->play2D("assets/copper.wav", false);
 }
 void playRainSound() {
     //PlaySound(TEXT("./assets/rain.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
     engine->play2D("assets/rain.wav", true);
 }
-
+void playTruckSound() {
+    engine->play2D("assets/truck.wav", true);
+}
+void playWarSound() {
+    //engine->play2D("assets/Warfare.wav", true);
+}
 void update(int value) {
     if (current == 2) {
         updateRain();
+        truckX += truckSpeedX;
+        truckY += truckSpeedY;
+
+        if (truckX > 1.2f) {
+            truckX = -1.2f;
+            truckY = -1.4f;
+        }
     }
     flameTime += 0.1f;
     if (current == 1) {
@@ -376,7 +405,6 @@ void update(int value) {
             fireSequenceActive = false;
         }
     }
-    
     missileX += missileSpeedX;
     missileY += missileSpeedY;
 
@@ -396,7 +424,6 @@ void update(int value) {
             }
         }
     }
-
     if (copperX > 1.0f) {
         copperX = -1.0f;
         copperY = -0.4f;
@@ -411,7 +438,6 @@ void update(int value) {
             cameraShakeOffsetY = 0.0f;
         }
     }
-
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
@@ -434,13 +460,14 @@ void keyboard(unsigned char key, int x, int y) {
         //PlaySound(NULL, NULL, 0);
         engine->stopAllSounds();
         playSiren();
-
+        playWarSound();
     }
     else if (key == '2') {
         current = 2;
         engine->stopAllSounds();
         initRain();
         playRainSound();
+        playTruckSound();
     }
     if (current == 1) {
         if (key == 'F' || key == 'f') {
@@ -470,19 +497,20 @@ void init() {
     stbi_set_flip_vertically_on_load(true);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     engine = createIrrKlangDevice();
     if (!engine) {
         printf("Failed to create sound engine.\n");
     }
-
-    sceneTexture = loadTexture("./assets/scene3.png");
-    scene2Texture = loadTexture("./assets/rainy.png");
+    sceneTexture = loadTexture("./assets/sceneup.png");
+    scene2Texture = loadTexture("./assets/rain.jpeg");
     tankTexture = loadTexture("./assets/tankangle.png", &tankImgWidth, &tankImgHeight);
     missileTexture = loadTexture("./assets/Missile.png", &missileImgWidth, &missileImgHeight);
     copperTexture = loadTexture("./assets/copperback.png", &copperImgWidth, &copperImgHeight);
     fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
     artilleryTexture = loadTexture("./assets/artillery-gun.png", &artilleryImgWidth, &artilleryImgHeight);
-    newTankTexture = loadTexture("./assets/tank.png", &newTankImgWidth, &newTankImgHeight); // Load new tank texture
+    newTankTexture = loadTexture("./assets/tank.png", &newTankImgWidth, &newTankImgHeight);
+    truckTexture = loadTexture("./assets/truck.png", &truckImgWidth, &truckImgHeight);
 
     glutKeyboardFunc(keyboard);
 }
