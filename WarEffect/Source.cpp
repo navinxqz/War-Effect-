@@ -73,10 +73,10 @@ FlamePos flames[] = {
 };
 int flameCount = sizeof(flames) / sizeof(flames[0]);
 
-const int NUM_RAINDROPS = 200;
+const int NUM_RAINDROPS = 500;
 struct Raindrop {
     float x, y;
-    float speedY;
+    float speedX, speedY;
 };
 Raindrop raindrops[NUM_RAINDROPS];
 
@@ -112,34 +112,46 @@ void hideFireTexture(int value);
 
 void initRain() {
     for (int i = 0; i < NUM_RAINDROPS; i++) {
-        raindrops[i].x = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;    // X in [-1, 1]
-        raindrops[i].y = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;    // Y in [-1, 1]
-        raindrops[i].speedY = 0.01f + ((float)rand() / RAND_MAX) * 0.02f;
+        raindrops[i].x = ((float)rand() / RAND_MAX) * 3.0f - 1.0f; // [-1.5, 1.5]
+        raindrops[i].y = ((float)rand() / RAND_MAX) * 2.4f - 1.2f; // [-1.2, 1.2]
+
+        raindrops[i].speedY = 0.01f + ((float)rand() / RAND_MAX) * 0.015f;
+        raindrops[i].speedX = -raindrops[i].speedY * 0.6f;  // consistent slant
     }
 }
+
 void drawRain() {
     glDisable(GL_TEXTURE_2D);
-    glColor4f(0.6f, 0.6f, 1.0f, 0.5f);
-    glLineWidth(1.5f);
+    glColor4f(0.6f, 0.6f, 1.0f, 0.4f);
+    glLineWidth(1.2f);
     glBegin(GL_LINES);
     for (int i = 0; i < NUM_RAINDROPS; i++) {
         float x = raindrops[i].x;
         float y = raindrops[i].y;
+        float dx = -0.015f;  // consistent with speedX
+        float dy = -0.04f;
+
         glVertex2f(x, y);
-        glVertex2f(x, y - 0.05f);    // Raindrop length
+        glVertex2f(x + dx, y + dy);
     }
     glEnd();
     glEnable(GL_TEXTURE_2D);
 }
 void updateRain() {
     for (int i = 0; i < NUM_RAINDROPS; i++) {
+        raindrops[i].x += raindrops[i].speedX;
         raindrops[i].y -= raindrops[i].speedY;
-        if (raindrops[i].y < -1.0f) {
-            raindrops[i].y = 1.0f;   // reset to top
-            raindrops[i].x = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;  // random x again
+
+        // If raindrop goes below or too far left, reset
+        if (raindrops[i].y < -1.3f || raindrops[i].x < -1.4f) {
+            raindrops[i].y = 1.3f;
+            raindrops[i].x = ((float)rand() / RAND_MAX) * 3.0f - 1.1f;  // again [-1.5, 1.5]
+            raindrops[i].speedY = 0.01f + ((float)rand() / RAND_MAX) * 0.015f;
+            raindrops[i].speedX = -raindrops[i].speedY * 0.5f;
         }
     }
 }
+
 void triggerCameraShake(int numFrames) {
     cameraShakeOffsetX = ((float)rand() / RAND_MAX - 0.5f) * 0.04f; // Random between -0.04 and 0.04
     cameraShakeOffsetY = ((float)rand() / RAND_MAX - 0.5f) * 0.02f;
@@ -348,11 +360,9 @@ void playTankFireSound() {
     engine->play2D("assets/tankfire7.wav", false);
 }
 void playSiren() {
-    //PlaySound(TEXT("./assets/tankfire7.wav"), NULL, SND_FILENAME | SND_ASYNC);
     engine->play2D("assets/siren.wav", true);
 }
 void playArtilleryFireSound() {
-    //PlaySound(TEXT("./assets/tankfire1.wav"), NULL, SND_FILENAME | SND_ASYNC);
     engine->play2D("assets/tankfire1.wav", false);
 }
 void copperSound() {
