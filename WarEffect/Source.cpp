@@ -33,6 +33,10 @@ float fireOffsetX = -0.1f, fireOffsetY = 0.12f;
 bool fireVisible = false;
 
 // Missile variables
+bool missileLaunched = false;
+float missileStartX = 1.2f, missileStartY = 0.3f;
+float missileTargetX = -0.2f, missileTargetY = 0.4f;
+
 float missileX = -1.2f, missileY = 0.3f;
 float missileSpeedX = 0.009, missileSpeedY = 0.0065f;
 
@@ -57,6 +61,10 @@ const int maxShakeFrames = 6;
 //truck variables
 float truckX = 0.9f, truckY = -0.0f;
 float truckSpeedX = 0.004f, truckSpeedY = 0.003f;
+//blast
+bool explosionActive = false;
+float explosionX = 0.0f, explosionY = 0.0f;
+int explosionDuration = 5000; // milliseconds (5 sec)
 
 
 // Flame variables
@@ -128,7 +136,7 @@ void drawRain() {
     for (int i = 0; i < NUM_RAINDROPS; i++) {
         float x = raindrops[i].x;
         float y = raindrops[i].y;
-        float dx = -0.015f;  // consistent with speedX
+        float dx = -0.015f;
         float dy = -0.04f;
 
         glVertex2f(x, y);
@@ -151,11 +159,27 @@ void updateRain() {
         }
     }
 }
-
 void triggerCameraShake(int numFrames) {
     cameraShakeOffsetX = ((float)rand() / RAND_MAX - 0.5f) * 0.04f; // Random between -0.04 and 0.04
     cameraShakeOffsetY = ((float)rand() / RAND_MAX - 0.5f) * 0.02f;
     cameraShakeFramesLeft = numFrames;
+}
+void startExplosion(float x, float y) {
+    explosionActive = true;
+    explosionX = x;
+    explosionY = y;
+
+    // Optional: Play explosion sound
+    engine->play2D("assets/explosion.wav", false);
+
+    // Trigger camera shake
+    triggerCameraShake(maxShakeFrames);
+
+    // Stop explosion after 5 sec
+    glutTimerFunc(explosionDuration, [](int) {
+        explosionActive = false;
+        glutPostRedisplay();
+        }, 0);
 }
 
 void display() {
@@ -415,8 +439,25 @@ void update(int value) {
             fireSequenceActive = false;
         }
     }
-    missileX += missileSpeedX;
-    missileY += missileSpeedY;
+    /*missileX += missileSpeedX;
+    missileY += missileSpeedY;*/
+    if (missileLaunched) {
+        float dx = missileTargetX - missileX;
+        float dy = missileTargetY - missileY;
+        float dist = sqrt(dx * dx + dy * dy);
+
+        if (dist > 0.01f) {
+            missileX += (dx / dist) * missileSpeedX;
+            missileY += (dy / dist) * missileSpeedY;
+        }
+        else {
+            missileLaunched = false;
+
+            // Trigger explosion at the target point
+            startExplosion(missileTargetX, missileTargetY);
+        }
+    }
+
 
     if (current == 1) {
         copperX += copperSpeedX;
@@ -502,6 +543,23 @@ void keyboard(unsigned char key, int x, int y) {
         }
     }
 }
+void mouse(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN && current == 1) {
+        missileLaunched = true;
+        missileX = missileStartX;
+        missileY = missileStartY;
+
+        // Change this if you want a different impact point
+        float dx = missileTargetX - missileX;
+        float dy = missileTargetY - missileY;
+        float length = sqrt(dx * dx + dy * dy);
+
+        // Optional: play sound or shake
+        engine->play2D("assets/tankfire1.wav", false);
+        triggerCameraShake(maxShakeFrames);
+    }
+}
+
 void init() {
     glClearColor(1.0f,1.0f,1.0f,1.0f);
     stbi_set_flip_vertically_on_load(true);
@@ -523,6 +581,7 @@ void init() {
     truckTexture = loadTexture("./assets/truck.png", &truckImgWidth, &truckImgHeight);
 
     glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
 }
 
 int main(int argc, char** argv) {
