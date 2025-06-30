@@ -75,6 +75,23 @@ struct Raindrop {
 };
 Raindrop raindrops[NUM_RAINDROPS];
 
+//thunder
+bool thunderActive = false;
+int thunderDuration = 150;
+int thunderCooldown = 9000;
+int nextThunderTime = 0;
+
+// Light cone control
+float lightStartX = -0.45f;
+float lightStartY = -0.21f;
+float lightEndY = -0.8f;
+
+int blinkCount = 0;           
+const int maxBlinks = 3;      
+int lightBlinkFast = 100;    
+int lightBlinkPause = 1500;
+bool lightConeVisible = true;
+
 // Load texture from file
 GLuint loadTexture(const char* filename, int* outWidth = nullptr, int* outHeight = nullptr) {
     int width, height, channels;
@@ -142,6 +159,41 @@ void updateRain() {
         }
     }
 }
+void toggleLightCone(int value) {
+    if (blinkCount < maxBlinks) {
+        lightConeVisible = !lightConeVisible;
+        blinkCount++;
+
+        glutTimerFunc(lightBlinkFast, toggleLightCone, 0);
+    }
+    else {
+        // After 3 fast blinks, pause for 3 seconds
+        glutTimerFunc(lightBlinkPause, [](int) {
+            blinkCount = 0; // Reset blink count
+            lightConeVisible = true; // Ensure starts visible
+            glutTimerFunc(lightBlinkFast, toggleLightCone, 0); // Restart blinking
+            }, 0);
+    }
+}
+void drawLightCone() {
+    if (!lightConeVisible) return;
+    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_TRIANGLES);
+    glColor4f(1.0f, 1.0f, 0.8f, 0.3f);
+    glVertex2f(lightStartX, lightStartY);
+    glColor4f(1.0f, 1.0f, 0.8f, 0.0f);
+    glVertex2f(-0.65f, lightEndY);
+    glVertex2f(-0.2f, lightEndY);
+    glEnd();
+
+    glPopAttrib();
+}
+
 void triggerCameraShake(int numFrames) {
     cameraShakeOffsetX = ((float)rand() / RAND_MAX - 0.5f) * 0.04f;
     cameraShakeOffsetY = ((float)rand() / RAND_MAX - 0.5f) * 0.02f;
@@ -194,6 +246,7 @@ void display() {
 
     if (current == 2) {
         drawRain();
+        drawLightCone();
     }
 
     // Check fire visible
@@ -262,6 +315,19 @@ void display() {
         glTexCoord2f(0.0f, 1.0f); glVertex2f(-truckDisplayWidth / 2, truckDisplayHeight / 2);
         glEnd();
         glPopMatrix();
+
+        if (thunderActive) {
+            glDisable(GL_TEXTURE_2D);
+            glColor4f(1.0f, 1.0f, 1.0f, 0.5f); // bright white flash
+            glBegin(GL_QUADS);
+            glVertex2f(-1.0f, -1.0f);
+            glVertex2f(1.0f, -1.0f);
+            glVertex2f(1.0f, 1.0f);
+            glVertex2f(-1.0f, 1.0f);
+            glEnd();
+            glEnable(GL_TEXTURE_2D);
+        }
+
     }
     // Draw artillery gun
     glPushMatrix();
@@ -391,6 +457,23 @@ void update(int value) {
             truckX = -1.2f;
             truckY = -1.4f;
         }
+        // Thunder logic
+        int currentTime = glutGet(GLUT_ELAPSED_TIME);
+        if (!thunderActive && currentTime >= nextThunderTime) {
+            thunderActive = true;
+            triggerCameraShake(maxShakeFrames); // optional shake effect
+            engine->play2D("assets/thunder.wav", false); // make sure thunder.wav exists
+
+            // Turn off thunder after some time
+            glutTimerFunc(thunderDuration, [](int) {
+                thunderActive = false;
+                glutPostRedisplay();
+                }, 0);
+
+            // Set next thunder after random cooldown
+            nextThunderTime = currentTime + thunderCooldown + rand() % 2000; // some randomness
+        }
+
     }
     if (current == 1 || current==3) {
         newTankX += tankSpeedX;
@@ -552,6 +635,8 @@ void init() {
     if (!engine) {
         printf("Failed to create sound engine.\n");
     }
+    glutTimerFunc(lightBlinkFast, toggleLightCone, 0);
+
     sceneTexture = loadTexture("./assets/sceneup.png");
     scene2Texture = loadTexture("./assets/rain.jpeg");
     scene3Texture = loadTexture("./assets/scenenew.jpeg", &scene3ImgWidth, &scene3ImgHeight);
