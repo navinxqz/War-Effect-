@@ -10,7 +10,7 @@ using namespace irrklang;
 
 #pragma comment(lib,"Winmm.lib")
 
-GLuint sceneTexture, scene2Texture, tankTexture, newTankTexture, missileTexture, copperTexture, fireTexture, artilleryTexture, truckTexture;
+GLuint sceneTexture, scene2Texture, scene3Texture, tankTexture, newTankTexture, missileTexture, copperTexture, fireTexture, artilleryTexture, truckTexture;
 int tankImgWidth, tankImgHeight;
 int newTankImgWidth, newTankImgHeight;
 int missileImgWidth, missileImgHeight;
@@ -18,6 +18,7 @@ int copperImgWidth, copperImgHeight;
 int fireImgWidth, fireImgHeight;
 int artilleryImgWidth, artilleryImgHeight;
 int truckImgWidth, truckImgHeight;
+int scene3ImgWidth, scene3ImgHeight;
 
 int current = 1;
 ISoundEngine* engine = nullptr;
@@ -34,11 +35,12 @@ bool fireVisible = false;
 
 // Missile variables
 bool missileLaunched = false;
-float missileStartX = 1.2f, missileStartY = 0.3f;
+float missileStartX = 1.2f, missileStartY = -0.3f;
 float missileTargetX = -0.2f, missileTargetY = 0.4f;
 
 float missileX = -1.2f, missileY = 0.3f;
 float missileSpeedX = 0.009, missileSpeedY = 0.0065f;
+bool missileVisible = true;
 
 // Copper variables
 float copperX = -0.9f, copperY = -0.1f;
@@ -164,15 +166,15 @@ void triggerCameraShake(int numFrames) {
     cameraShakeOffsetY = ((float)rand() / RAND_MAX - 0.5f) * 0.02f;
     cameraShakeFramesLeft = numFrames;
 }
+void hideMissile(int value) {
+    missileVisible = false;
+    engine->play2D("assets/explosion.wav", false);
+}
 void startExplosion(float x, float y) {
     explosionActive = true;
     explosionX = x;
     explosionY = y;
-
-    // Optional: Play explosion sound
     engine->play2D("assets/explosion.wav", false);
-
-    // Trigger camera shake
     triggerCameraShake(maxShakeFrames);
 
     // Stop explosion after 5 sec
@@ -180,6 +182,7 @@ void startExplosion(float x, float y) {
         explosionActive = false;
         glutPostRedisplay();
         }, 0);
+    //glutTimerFunc(3000, hideMissile, 0);
 }
 
 void display() {
@@ -193,7 +196,12 @@ void display() {
     }
     else if (current == 2) {
         glBindTexture(GL_TEXTURE_2D, scene2Texture);
-    }glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    }
+    else if (current == 3) {
+        glBindTexture(GL_TEXTURE_2D, scene3Texture);
+    }
+
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
     glPushMatrix();
     glTranslatef(cameraShakeOffsetX, cameraShakeOffsetY, 0.0f);
@@ -308,18 +316,21 @@ void display() {
         glPopMatrix();
     }
     // Missile
-    glPushMatrix();
-    glTranslatef(missileX, missileY, 0);
-    glBindTexture(GL_TEXTURE_2D, missileTexture);
-    float missileAspect = (float)missileImgWidth / missileImgHeight;
-    float pw = 0.2f, ph = pw / missileAspect;
-    glBegin(GL_QUADS);
-    glTexCoord2f(0, 0); glVertex2f(-pw / 2, -ph / 2);
-    glTexCoord2f(1, 0); glVertex2f(pw / 2, -ph / 2);
-    glTexCoord2f(1, 1); glVertex2f(pw / 2, ph / 2);
-    glTexCoord2f(0, 1); glVertex2f(-pw / 2, ph / 2);
-    glEnd();
-    glPopMatrix();
+    if (missileVisible) {  // KEEP this condition as-is
+        glPushMatrix();
+        glTranslatef(missileX, missileY, 0);
+        glBindTexture(GL_TEXTURE_2D, missileTexture);
+        float missileAspect = (float)missileImgWidth / missileImgHeight;
+        float pw = 0.2f, ph = pw / missileAspect;
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0); glVertex2f(-pw / 2, -ph / 2);
+        glTexCoord2f(1, 0); glVertex2f(pw / 2, -ph / 2);
+        glTexCoord2f(1, 1); glVertex2f(pw / 2, ph / 2);
+        glTexCoord2f(0, 1); glVertex2f(-pw / 2, ph / 2);
+        glEnd();
+        glPopMatrix();
+    }
+
 
     // Copper + rotor
     if (current == 1) {
@@ -329,7 +340,6 @@ void display() {
         glPushMatrix();
         glTranslatef(copperX, copperY + ch / 2 + 0.02f, 0.0f);
 
-        // Draw copper texture
         glBindTexture(GL_TEXTURE_2D, copperTexture);
         glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2f(-cw / 2, -ch / 2);
@@ -362,8 +372,6 @@ void display() {
         glPopMatrix(); // End of copper+rotor
         glDisable(GL_TEXTURE_2D);
     }
-
-    // Draw flames at building positions
     for (int i = 0; i < flameCount; i++) {
         //drawFlame(flames[i].x, flames[i].y);
     }
@@ -439,8 +447,6 @@ void update(int value) {
             fireSequenceActive = false;
         }
     }
-    /*missileX += missileSpeedX;
-    missileY += missileSpeedY;*/
     if (missileLaunched) {
         float dx = missileTargetX - missileX;
         float dy = missileTargetY - missileY;
@@ -452,13 +458,11 @@ void update(int value) {
         }
         else {
             missileLaunched = false;
-
-            // Trigger explosion at the target point
             startExplosion(missileTargetX, missileTargetY);
+            current = 3;
+            glutTimerFunc(1000, hideMissile, 0);
         }
     }
-
-
     if (current == 1) {
         copperX += copperSpeedX;
         copperY += copperSpeedY;
@@ -509,12 +513,22 @@ void keyboard(unsigned char key, int x, int y) {
     if (key == '1') {
         current = 1;
         //PlaySound(NULL, NULL, 0);
+        missileVisible = true;
+        missileX = missileStartX;
+        missileY = missileStartY;
+        missileLaunched = false;
+
         engine->stopAllSounds();
         playSiren();
         playWarSound();
     }
     else if (key == '2') {
         current = 2;
+        missileVisible = true;
+        missileX = missileStartX;
+        missileY = missileStartY;
+        missileLaunched = false;
+
         engine->stopAllSounds();
         initRain();
         playRainSound();
@@ -572,6 +586,7 @@ void init() {
     }
     sceneTexture = loadTexture("./assets/sceneup.png");
     scene2Texture = loadTexture("./assets/rain.jpeg");
+    scene3Texture = loadTexture("./assets/scene3.jpeg", &scene3ImgWidth, &scene3ImgHeight);
     tankTexture = loadTexture("./assets/tankangle.png", &tankImgWidth, &tankImgHeight);
     missileTexture = loadTexture("./assets/Missile.png", &missileImgWidth, &missileImgHeight);
     copperTexture = loadTexture("./assets/copperback.png", &copperImgWidth, &copperImgHeight);
