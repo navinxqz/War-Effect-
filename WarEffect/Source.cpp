@@ -39,7 +39,7 @@ float missileStartX = 1.2f, missileStartY = -0.3f;
 float missileTargetX = -0.2f, missileTargetY = 0.4f;
 
 float missileX = -1.2f, missileY = 0.3f;
-float missileSpeedX = 0.009, missileSpeedY = 0.0065f;
+float missileSpeedX = 0.018f, missileSpeedY = 0.013f;
 bool missileVisible = true;
 
 // Copper variables
@@ -237,7 +237,7 @@ void display() {
         glPopMatrix();
     }
     // Draw tank
-    if (current == 1) {
+    if (current == 1 || current==3) {
         glPushMatrix();
         glTranslatef(tankX, tankY, 0.0f);
         glBindTexture(GL_TEXTURE_2D, tankTexture);
@@ -333,7 +333,7 @@ void display() {
 
 
     // Copper + rotor
-    if (current == 1) {
+    if (current == 1 || current==3) {
         float copperAspect = (float)copperImgWidth / copperImgHeight;
         float cw = 0.3f, ch = cw / copperAspect;
 
@@ -422,7 +422,7 @@ void update(int value) {
         }
     }
     flameTime += 0.1f;
-    if (current == 1) {
+    if (current == 1 || current==3) {
         newTankX += tankSpeedX;
         newTankY += tankSpeedY;
 
@@ -463,7 +463,7 @@ void update(int value) {
             glutTimerFunc(1000, hideMissile, 0);
         }
     }
-    if (current == 1) {
+    if (current == 1 || current==3) {
         copperX += copperSpeedX;
         copperY += copperSpeedY;
         if (copperX > -1.0f && copperX < 0.45f) {
@@ -534,7 +534,7 @@ void keyboard(unsigned char key, int x, int y) {
         playRainSound();
         playTruckSound();
     }
-    if (current == 1) {
+    if (current == 1 || current == 3) {
         if (key == 'F' || key == 'f') {
             fireVisible = true;
             if (fireTexture != 0) { glDeleteTextures(1, &fireTexture); }
