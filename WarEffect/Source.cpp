@@ -24,8 +24,8 @@ int current = 1;
 ISoundEngine* engine = nullptr;
 
 // Tank variables
-float tankX = 1.2f, tankY = 0.18f;
-float newTankX = 1.5f, newTankY = 0.18f;
+float tankX = 1.1f, tankY = 0.18f;
+float newTankX = 1.4f, newTankY = 0.18f;
 float tankSpeedX = -0.002f, tankSpeedY = -0.00105f;
 bool stop = false;
 
@@ -66,7 +66,7 @@ float truckSpeedX = 0.004f, truckSpeedY = 0.003f;
 //blast
 bool explosionActive = false;
 float explosionX = 0.0f, explosionY = 0.0f;
-int explosionDuration = 5000; // milliseconds (5 sec)
+int explosionDuration = 5000;
 
 const int NUM_RAINDROPS = 500;
 struct Raindrop {
@@ -100,21 +100,18 @@ GLuint loadTexture(const char* filename, int* outWidth = nullptr, int* outHeight
     stbi_image_free(image);
     return textureID;
 }
-
-// Forward declaration of the function to change fire texture
 void changeFireTexture(int value);
 void hideFireTexture(int value);
 
 void initRain() {
     for (int i = 0; i < NUM_RAINDROPS; i++) {
-        raindrops[i].x = ((float)rand() / RAND_MAX) * 3.0f - 1.0f; // [-1.5, 1.5]
-        raindrops[i].y = ((float)rand() / RAND_MAX) * 2.4f - 1.2f; // [-1.2, 1.2]
+        raindrops[i].x = ((float)rand() / RAND_MAX) * 3.0f - 1.0f;
+        raindrops[i].y = ((float)rand() / RAND_MAX) * 2.4f - 1.2f;
 
         raindrops[i].speedY = 0.01f + ((float)rand() / RAND_MAX) * 0.015f;
-        raindrops[i].speedX = -raindrops[i].speedY * 0.6f;  // consistent slant
+        raindrops[i].speedX = -raindrops[i].speedY * 0.6f;
     }
 }
-
 void drawRain() {
     glDisable(GL_TEXTURE_2D);
     glColor4f(0.6f, 0.6f, 1.0f, 0.4f);
@@ -137,17 +134,16 @@ void updateRain() {
         raindrops[i].x += raindrops[i].speedX;
         raindrops[i].y -= raindrops[i].speedY;
 
-        // If raindrop goes below or too far left, reset
         if (raindrops[i].y < -1.3f || raindrops[i].x < -1.4f) {
             raindrops[i].y = 1.3f;
-            raindrops[i].x = ((float)rand() / RAND_MAX) * 3.0f - 1.1f;  // again [-1.5, 1.5]
+            raindrops[i].x = ((float)rand() / RAND_MAX) * 3.0f - 1.1f;
             raindrops[i].speedY = 0.01f + ((float)rand() / RAND_MAX) * 0.015f;
             raindrops[i].speedX = -raindrops[i].speedY * 0.5f;
         }
     }
 }
 void triggerCameraShake(int numFrames) {
-    cameraShakeOffsetX = ((float)rand() / RAND_MAX - 0.5f) * 0.04f; // Random between -0.04 and 0.04
+    cameraShakeOffsetX = ((float)rand() / RAND_MAX - 0.5f) * 0.04f;
     cameraShakeOffsetY = ((float)rand() / RAND_MAX - 0.5f) * 0.02f;
     cameraShakeFramesLeft = numFrames;
 }
@@ -167,7 +163,6 @@ void startExplosion(float x, float y) {
         explosionActive = false;
         glutPostRedisplay();
         }, 0);
-    //glutTimerFunc(3000, hideMissile, 0);
 }
 
 void display() {
@@ -185,9 +180,7 @@ void display() {
     else if (current == 3) {
         glBindTexture(GL_TEXTURE_2D, scene3Texture);
     }
-
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
     glPushMatrix();
     glTranslatef(cameraShakeOffsetX, cameraShakeOffsetY, 0.0f);
 
@@ -227,7 +220,7 @@ void display() {
         glTranslatef(tankX, tankY, 0.0f);
         glBindTexture(GL_TEXTURE_2D, tankTexture);
         float aspect = (float)tankImgWidth / (float)tankImgHeight;
-        float displayWidth = 0.43f;
+        float displayWidth = 0.4f;
         float displayHeight = displayWidth / aspect;
 
         glBegin(GL_QUADS);
@@ -238,12 +231,12 @@ void display() {
         glEnd();
         glPopMatrix();
 
-        // Draw new tank
+        // Draw jeep
         glPushMatrix();
         glTranslatef(newTankX, newTankY, 0.0f);
         glBindTexture(GL_TEXTURE_2D, newTankTexture);
         float newTankAspect = (float)newTankImgWidth / (float)newTankImgHeight;
-        float newTankDisplayWidth = 0.2f;
+        float newTankDisplayWidth = 0.22f;
         float newTankDisplayHeight = newTankDisplayWidth / newTankAspect;
 
         glBegin(GL_QUADS);
@@ -301,7 +294,7 @@ void display() {
         glPopMatrix();
     }
     // Missile
-    if (missileVisible) {  // KEEP this condition as-is
+    if (missileVisible) { 
         glPushMatrix();
         glTranslatef(missileX, missileY, 0);
         glBindTexture(GL_TEXTURE_2D, missileTexture);
@@ -315,8 +308,6 @@ void display() {
         glEnd();
         glPopMatrix();
     }
-
-
     // Copper + rotor
     if (current == 1 || current==3) {
         float copperAspect = (float)copperImgWidth / copperImgHeight;
@@ -352,7 +343,7 @@ void display() {
         glVertex2f(-0.005f, 0.15f);
         glEnd();
 
-        glEnable(GL_TEXTURE_2D); // Re-enable for next draw
+        glEnable(GL_TEXTURE_2D);
         glPopMatrix(); // End rotor
         glPopMatrix(); // End of copper+rotor
         glDisable(GL_TEXTURE_2D);
@@ -542,12 +533,10 @@ void mouse(int button, int state, int x, int y) {
         missileX = missileStartX;
         missileY = missileStartY;
 
-        // Change this if you want a different impact point
         float dx = missileTargetX - missileX;
         float dy = missileTargetY - missileY;
         float length = sqrt(dx * dx + dy * dy);
 
-        // Optional: play sound or shake
         engine->play2D("assets/tankfire1.wav", false);
         triggerCameraShake(maxShakeFrames);
     }
@@ -571,7 +560,7 @@ void init() {
     copperTexture = loadTexture("./assets/copperback.png", &copperImgWidth, &copperImgHeight);
     fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
     artilleryTexture = loadTexture("./assets/artillery-gun.png", &artilleryImgWidth, &artilleryImgHeight);
-    newTankTexture = loadTexture("./assets/tank.png", &newTankImgWidth, &newTankImgHeight);
+    newTankTexture = loadTexture("./assets/jeep.png", &newTankImgWidth, &newTankImgHeight);
     truckTexture = loadTexture("./assets/truck.png", &truckImgWidth, &truckImgHeight);
 
     glutKeyboardFunc(keyboard);
@@ -582,7 +571,7 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(800, 600);
-    glutCreateWindow("Tank Animation with Flames on Buildings");
+    glutCreateWindow("WarZone");
 
     init();
     glutDisplayFunc(display);
