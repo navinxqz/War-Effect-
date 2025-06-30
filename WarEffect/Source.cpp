@@ -68,21 +68,6 @@ bool explosionActive = false;
 float explosionX = 0.0f, explosionY = 0.0f;
 int explosionDuration = 5000; // milliseconds (5 sec)
 
-
-// Flame variables
-float flameTime = 0.0f;
-
-// Fixed flame positions on buildings
-struct FlamePos {
-    float x, y;
-};
-FlamePos flames[] = {
-    {-0.6f, -0.15f},
-    {-0.2f,  0.05f},
-    { 0.3f, -0.05f}
-};
-int flameCount = sizeof(flames) / sizeof(flames[0]);
-
 const int NUM_RAINDROPS = 500;
 struct Raindrop {
     float x, y;
@@ -372,17 +357,12 @@ void display() {
         glPopMatrix(); // End of copper+rotor
         glDisable(GL_TEXTURE_2D);
     }
-    for (int i = 0; i < flameCount; i++) {
-        //drawFlame(flames[i].x, flames[i].y);
-    }
     glutSwapBuffers();
     glPopMatrix();
 }
 void changeFireTexture(int value);
 void hideFireTexture(int value);
 
-//bool fireVisible = false;
-//float flameTime = 0.0f;
 bool fireSequenceActive = false;
 bool copperSoundPlaying = false;
 
@@ -421,7 +401,6 @@ void update(int value) {
             truckY = -1.4f;
         }
     }
-    flameTime += 0.1f;
     if (current == 1 || current==3) {
         newTankX += tankSpeedX;
         newTankY += tankSpeedY;
@@ -460,7 +439,7 @@ void update(int value) {
             missileLaunched = false;
             startExplosion(missileTargetX, missileTargetY);
             current = 3;
-            glutTimerFunc(1000, hideMissile, 0);
+            glutTimerFunc(700, hideMissile, 0);
         }
     }
     if (current == 1 || current==3) {
@@ -586,7 +565,7 @@ void init() {
     }
     sceneTexture = loadTexture("./assets/sceneup.png");
     scene2Texture = loadTexture("./assets/rain.jpeg");
-    scene3Texture = loadTexture("./assets/scene3.jpeg", &scene3ImgWidth, &scene3ImgHeight);
+    scene3Texture = loadTexture("./assets/scenenew.jpeg", &scene3ImgWidth, &scene3ImgHeight);
     tankTexture = loadTexture("./assets/tankangle.png", &tankImgWidth, &tankImgHeight);
     missileTexture = loadTexture("./assets/Missile.png", &missileImgWidth, &missileImgHeight);
     copperTexture = loadTexture("./assets/copperback.png", &copperImgWidth, &copperImgHeight);
