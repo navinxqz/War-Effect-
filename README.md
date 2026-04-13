@@ -1,8 +1,9 @@
-# 💥 War Effect — Real-Time 2D Visual Effects Simulation using OpenGL & GLUT
+# 💥 War Effect — Real-Time 2D War Simulation with OpenGL, GLUT & irrKlang Audio
 
 <p align="center">
   <img src="https://img.shields.io/badge/Language-C%2B%2B-blue?style=for-the-badge&logo=c%2B%2B" />
   <img src="https://img.shields.io/badge/Graphics-OpenGL-red?style=for-the-badge&logo=opengl" />
+  <img src="https://img.shields.io/badge/Audio-irrKlang-orange?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Toolkit-GLUT-yellow?style=for-the-badge" />
   <img src="https://img.shields.io/badge/IDE-Visual%20Studio-purple?style=for-the-badge&logo=visualstudio" />
   <img src="https://img.shields.io/badge/Platform-Windows%20x64-lightgrey?style=for-the-badge&logo=windows" />
@@ -12,9 +13,9 @@
 
 ## 📌 Project Overview
 
-**War Effect** is a real-time 2D visual effects simulation written in **C++**, rendered using **OpenGL** with the **GLUT (OpenGL Utility Toolkit)** windowing library. The project simulates war-inspired visual effects — such as explosions, particle bursts, fire, smoke, and environmental destruction — drawn directly via OpenGL's rendering pipeline without any game engine.
+**War Effect** is a real-time 2D interactive war simulation written in **C++**, rendered using **OpenGL** and **GLUT** with integrated audio powered by **irrKlang**. The application presents three distinct scene environments featuring animated military objects — tanks, helicopters, artillery, trucks, and missiles — with synchronized sound effects, dynamic weather (rain & thunder), and real-time camera shake effects.
 
-This project demonstrates a solid command of **computer graphics fundamentals** — including primitive drawing, coordinate systems, animation loops, color blending, and particle simulation — all implemented at the graphics API level using OpenGL and GLUT.
+This project demonstrates **practical computer graphics programming** — event-driven callbacks, texture mapping, 2D coordinate transformations, alpha blending, real-time animation loops, and audio-visual synchronization — all implemented at the graphics API level using OpenGL without a high-level game engine.
 
 ---
 
@@ -22,10 +23,11 @@ This project demonstrates a solid command of **computer graphics fundamentals** 
 
 This project was built to:
 
-- Gain hands-on experience with **OpenGL's rendering pipeline** and understand how graphics APIs communicate with the GPU at a low level.
-- Implement a **GLUT-driven application loop** and understand how display callbacks, idle callbacks, and timer functions work together to produce smooth animation.
-- Design a **particle system from scratch in C++** without relying on any engine or framework — managing spawn, update, and death of hundreds of entities per frame manually.
-- Produce a visually compelling **real-time demo** that showcases computer graphics skills for academic and professional portfolios.
+- Gain hands-on experience with **OpenGL's rendering pipeline** and GLUT's event-driven callback architecture for real-time graphics.
+- Master **texture mapping, sprite animation, and 2D transformations** — loading textures with stbi_image and positioning sprites with OpenGL matrix operations.
+- Integrate **third-party audio libraries (irrKlang)** to synchronize sound effects with visual events — explosions, gunfire, engine roars, and weather effects.
+- Implement **state-driven animation** using GLUT timers and callbacks, managing multiple concurrent animations and scene transitions.
+- Create an **interactive, multi-scene environment** that responds to keyboard and mouse input, demonstrating event handling and simulation logic.
 
 ---
 
@@ -34,17 +36,22 @@ This project was built to:
 | Technology | Role |
 |---|---|
 | **C++** | Core programming language |
-| **OpenGL** | Low-level graphics rendering API (GPU communication) |
-| **GLUT / FreeGLUT** | Window creation, display loop, keyboard & mouse input callbacks |
-| **GLU** | OpenGL Utility Library — orthographic projection, helper functions |
-| **Visual Studio** | IDE and MSVC compiler |
-| **x64 Windows** | Target build platform |
+| **OpenGL** | Low-level graphics rendering (GPU communication, vertex drawing) |
+| **GLUT / FreeGLUT** | Window creation, display loop, input callbacks (keyboard, mouse) |
+| **GLU** | OpenGL Utility Library — 2D orthographic projection |
+| **irrKlang** | Audio engine for sound effect playback & spatial audio |
+| **stb_image** | Single-header image loading library (PNG, JPG support) |
+| **Visual Studio** | IDE and MSVC compiler with x64 build target |
 
-### Why OpenGL + GLUT?
+### Architecture Highlights
 
-**OpenGL** is a cross-platform, industry-standard graphics API that gives direct access to the GPU for rendering 2D and 3D graphics. Rather than using a high-level engine, OpenGL lets you control every vertex, color, and draw call explicitly — which is exactly what's needed to understand how graphics pipelines work at the systems level.
+**OpenGL** handles all pixel-level rendering — submitting vertex positions, texture coordinates, and colors directly to the GPU via `glBegin`, `glVertex2f`, `glTexCoord2f`, and `glBindTexture`.
 
-**GLUT** (OpenGL Utility Toolkit) handles the OS-level boilerplate — creating a window, setting up an OpenGL context, and dispatching events (keyboard, mouse, resize, idle) to callback functions. This allows the application to focus purely on rendering logic without writing platform-specific window management code.
+**GLUT** manages the window lifecycle and dispatches events (keyboard, mouse, reshape, timer callbacks) to registered handler functions, eliminating platform-specific OS code.
+
+**irrKlang** provides real-time audio playback with minimal latency — critical for synchronized explosion sounds, gunfire, engine noise, and weather ambience.
+
+**stb_image** is a lightweight, header-only image decoder that loads PNG and JPEG textures directly into memory for GPU binding.
 
 ---
 
@@ -81,174 +88,139 @@ War-Effect-/
 
 ## ⚙️ How It Works — Technical Breakdown
 
-### 1. Program Entry Point & GLUT Initialization
+### 1. Multi-Scene Environment
 
-The program starts at `main()`, where GLUT is initialized and the window is configured:
+The application manages **three distinct scenes**, each with unique visual and audio characteristics:
 
-```cpp
-int main(int argc, char** argv) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);  // Double buffering + RGB color
-    glutInitWindowSize(800, 600);
-    glutCreateWindow("War Effect");
-
-    // Register callbacks
-    glutDisplayFunc(display);     // Called to render each frame
-    glutIdleFunc(update);         // Called when no other events are pending
-    glutKeyboardFunc(keyboard);   // Called on key press
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black background
-    glutMainLoop();               // Hands control to GLUT's event loop
-    return 0;
-}
-```
-
-`GLUT_DOUBLE` enables **double buffering** — one buffer is drawn to while the other is displayed, preventing screen flicker during animation.
-
----
-
-### 2. GLUT's Callback-Driven Loop
-
-Unlike a traditional `while` loop, GLUT operates on a **callback model**. You register functions and GLUT calls them at the right time:
-
-| Callback | Registration Function | Purpose |
+| Scene | Key Objects | Environment |
 |---|---|---|
-| Display | `glutDisplayFunc()` | Renders the current frame |
-| Idle | `glutIdleFunc()` | Updates simulation state between frames |
-| Keyboard | `glutKeyboardFunc()` | Handles key presses |
-| Mouse | `glutMouseFunc()` | Handles click events |
-| Timer | `glutTimerFunc()` | Scheduled callbacks for timed events |
+| **Scene 1** | Tank, Jeep, Helicopter, Artillery Gun, Missile | Combat arena with static background |
+| **Scene 2** | Truck, Rain System, Thunder Effect, Searchlight | Storm environment with dynamic weather |
+| **Scene 3** | Tank, Jeep, Helicopter, Artillery Gun (alternative backdrop) | Secondary combat zone |
 
-The `glutMainLoop()` call never returns — it continuously dispatches events to these registered callbacks, driving the animation indefinitely.
+Scene switching is triggered by pressing **`1`** or **`2`** on the keyboard, resetting game state and audio streams.
 
 ---
 
-### 3. OpenGL Coordinate System & Projection
+### 2. Game Objects & Animation
 
-The project uses OpenGL's **2D orthographic projection** via GLU, which maps screen coordinates to a flat plane — ideal for 2D effects:
+Each object is represented by:
+- **Position variables** (`x`, `y`) — 2D screen coordinates
+- **Velocity variables** (`speedX`, `speedY`) — per-frame movement increments
+- **Texture variables** — OpenGL texture IDs bound at render time
+- **Visibility flags** — whether to draw the object
 
-```cpp
-void reshape(int w, int h) {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, w, 0, h);      // (left, right, bottom, top)
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-```
-
-`gluOrtho2D()` maps a logical coordinate space directly to screen pixels, making it straightforward to position particles and effects at precise on-screen locations without dealing with perspective distortion.
-
----
-
-### 4. Drawing Primitives with OpenGL
-
-All visual output is produced using **OpenGL's immediate-mode primitive drawing**:
+Object update happens in the `update()` callback, called via `glutTimerFunc(16, update, 0)` every ~16ms (60 FPS):
 
 ```cpp
-// Drawing a point (single particle / spark)
-glBegin(GL_POINTS);
-    glColor3f(1.0f, 0.5f, 0.0f);      // Orange
-    glVertex2f(particle.x, particle.y);
-glEnd();
-
-// Drawing a filled circle (explosion core)
-glBegin(GL_TRIANGLE_FAN);
-    glColor4f(1.0f, 0.2f, 0.0f, alpha); // Red-orange with transparency
-    glVertex2f(cx, cy);                   // Center point
-    for (int i = 0; i <= segments; i++) {
-        float angle = i * 2.0f * M_PI / segments;
-        glVertex2f(cx + r * cos(angle), cy + r * sin(angle));
+void update(int value) {
+    if (current == 1) {
+        tankX += tankSpeedX;      // Move tank
+        copperX += copperSpeedX;  // Move helicopter
+        // ... update other objects
     }
-glEnd();
+    glutPostRedisplay();          // Request redraw
+    glutTimerFunc(16, update, 0); // Schedule next update
+}
 ```
-
-Common OpenGL primitives used in this project:
-
-| Primitive | OpenGL Constant | Visual Use |
-|---|---|---|
-| Points | `GL_POINTS` | Individual spark / debris particles |
-| Lines | `GL_LINES` | Shockwave lines or trajectory trails |
-| Triangle Fan | `GL_TRIANGLE_FAN` | Circular explosion blast radius |
-| Quads | `GL_QUADS` | Rectangular debris fragments |
 
 ---
 
-### 5. Particle System Design
+### 3. Texture Loading & Rendering
 
-The war effects are driven by a **particle system** — a simulation technique where many small independent objects are spawned, moved, and destroyed over time to create fire, smoke, sparks, and explosions.
-
-Each particle is represented as a struct:
+Textures are loaded once at startup using **stb_image**:
 
 ```cpp
-struct Particle {
-    float x, y;       // Position on screen
-    float vx, vy;     // Velocity vector
-    float life;       // Remaining lifetime (1.0 = full, 0.0 = dead)
-    float r, g, b, a; // RGBA color — alpha fades with life
-    float size;       // Point size for rendering
+GLuint loadTexture(const char* filename, int* outWidth, int* outHeight) {
+    unsigned char* image = stbi_load(filename, &width, &height, &channels, 0);
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, 
+                 GL_RGBA, GL_UNSIGNED_BYTE, image);
+    stbi_image_free(image);
+    return textureID;
+}
+```
+
+Rendering uses **textured quads** — 4-vertex rectangles with texture coordinates:
+
+```cpp
+glBindTexture(GL_TEXTURE_2D, tankTexture);
+glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(-w/2, -h/2);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(w/2, -h/2);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(w/2, h/2);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(-w/2, h/2);
+glEnd();
+```
+
+---
+
+### 4. Audio Synchronization with irrKlang
+
+Sounds are triggered on game events using the **irrKlang audio engine**:
+
+```cpp
+ISoundEngine* engine = createIrrKlangDevice();
+
+// Play sound on tank fire
+void playTankFireSound() {
+    engine->play2D("assets/tankfire7.wav", false);
+}
+
+// Loop ambient sound (rain)
+void playRainSound() {
+    engine->play2D("assets/rain.wav", true);  // true = loop
+}
+```
+
+**Audio-Visual Events:**
+- **Missile launch** → "tankfire1.wav" + camera shake
+- **Explosion** → "explosion.wav" + screen shake + missile disappears
+- **Scene 2 transition** → stops all sounds, plays rain (looped) + truck engine noise
+- **Thunder effect** → dramatic "thunder.wav" at random intervals + camera shake
+
+---
+
+### 5. Dynamic Effects
+
+**Camera Shake:**
+Simulates impact and explosion intensity by randomly offsetting the view:
+
+```cpp
+void triggerCameraShake(int numFrames) {
+    cameraShakeOffsetX = (rand() / RAND_MAX - 0.5f) * 0.04f;
+    cameraShakeOffsetY = (rand() / RAND_MAX - 0.5f) * 0.02f;
+    cameraShakeFramesLeft = numFrames;  // Decay over 6 frames
+}
+```
+
+**Rain System:**
+500 raindrops as a simple particle-like structure, updating position and resetting when off-screen:
+
+```cpp
+struct Raindrop {
+    float x, y;
+    float speedX, speedY;
 };
-```
 
-Each frame, every live particle is updated:
-
-```cpp
-void updateParticles(float dt) {
-    for (auto& p : particles) {
-        p.x   += p.vx * dt;         // Advance position
-        p.y   += p.vy * dt;
-        p.vy  -= GRAVITY * dt;      // Gravity pulls downward
-        p.life -= DECAY_RATE * dt;  // Age the particle
-        p.a    = p.life;            // Transparency tracks lifetime
+void updateRain() {
+    for (int i = 0; i < 500; i++) {
+        raindrops[i].x += raindrops[i].speedX;
+        raindrops[i].y -= raindrops[i].speedY;
+        if (raindrops[i].y < -1.3f) {
+            // Reset raindrop to top
+        }
     }
-    // Erase dead particles efficiently
-    particles.erase(
-        std::remove_if(particles.begin(), particles.end(),
-            [](const Particle& p) { return p.life <= 0.0f; }),
-        particles.end()
-    );
 }
 ```
 
-New particles are **spawned** on events (e.g., an explosion trigger) with randomized velocities, sizes, and lifetimes to produce organic, non-repeating visuals.
+**Animated Fire & Light:**
+- Tank/artillery fire textures cycle and fade using GLUT timers
+- Searchlight pulses with fast blink (100ms) then pause (1.5s)
 
----
 
-### 6. Alpha Blending for Realistic Effects
-
-Transparency and color fading are achieved using OpenGL's **blending equations**:
-
-```cpp
-glEnable(GL_BLEND);
-glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Standard transparency
-```
-
-This makes particles fade out naturally as their lifetime decreases.
-
-For **additive blending** — used for glowing fire and sparks:
-
-```cpp
-glBlendFunc(GL_SRC_ALPHA, GL_ONE); // Additive: overlapping particles brighten the scene
-```
-
-Additive blending gives explosion cores and flame effects their characteristic high-intensity glow, since overlapping bright particles accumulate into white-hot centers.
-
----
-
-### 7. Double Buffering & Frame Display
-
-At the end of each display callback, the completed frame is pushed to the screen:
-
-```cpp
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT); // Wipe the back buffer
-    drawAllEffects();              // Render particles and shapes
-    glutSwapBuffers();             // Flip back buffer → screen
-}
-```
-
-`glutSwapBuffers()` is what makes animation smooth — the CPU renders into the hidden back buffer while the user sees the previously completed front buffer. Swapping is near-instant.
 
 ---
 
@@ -257,9 +229,23 @@ void display() {
 | Requirement | Details |
 |---|---|
 | **Visual Studio** | 2019 or 2022, with "Desktop development with C++" workload |
-| **OpenGL** | Included in Windows SDK — `opengl32.lib` and `glu32.lib` available by default |
-| **FreeGLUT** | Bundled in `externals/` — no separate install needed |
+| **OpenGL** | Included in Windows SDK — `opengl32.lib` and `glu32.lib` available on Windows x64 |
+| **FreeGLUT** | Bundled in `externals/` — pre-configured in the `.vcxproj` file |
+| **irrKlang** | Audio library — included in project build configuration |
+| **Asset Files** | `.png`, `.jpg`, `.wav` files expected in `WarEffect/assets/` directory |
 | **OS** | Windows 10 or 11, x64 architecture |
+
+---
+
+## 🎮 Controls & Interaction
+
+| Input | Action |
+|---|---|
+| **`1` key** | Switch to Scene 1 (combat arena) |
+| **`2` key** | Switch to Scene 2 (rain/storm) |
+| **`F` key** | Tank fire (Scene 1 only) — plays fire animation + sound + camera shake |
+| **`G` key** | Artillery fire (Scene 1 only) — fires artillery gun + sound + camera shake |
+| **Mouse Click** | Launch missile toward cursor (Scene 1 only) — triggers sound + effect |
 
 ---
 
@@ -268,109 +254,157 @@ void display() {
 ### Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/navinxqz/War-Effect-.git
-cd War-Effect-
+git clone https://github.com/navinxqz/WarEffect.git
+cd WarEffect
 ```
 
 ### Step 2 — Open in Visual Studio
 
-Open the project file directly:
-
+Open the solution file:
 ```
-WarEffect/WarEffect.vcxproj
+WarEffect.sln
 ```
 
-Visual Studio will load it with all pre-configured build settings.
+Visual Studio will load the project with all pre-configured build settings.
 
-### Step 3 — Set Build Configuration
+### Step 3 — Verify Asset Directory
 
-In the Visual Studio toolbar:
-- **Configuration:** `Debug`
+Ensure the `assets/` folder contains all required files:
+```
+WarEffect/assets/
+├── sceneup.png              (Scene 1 background)
+├── rain.jpeg                (Scene 2 background)
+├── scenenew.jpeg            (Scene 3 background)
+├── tankangle.png            (Tank sprite)
+├── jeep.png                 (Jeep sprite)
+├── copperback.png           (Helicopter sprite)
+├── artillery-gun.png        (Artillery sprite)
+├── truck.png                (Truck sprite)
+├── Missile.png              (Missile sprite)
+├── TankFire1.png & TankFire2.png  (Fire animations)
+├── tankfire7.wav            (Tank fire sound)
+├── tankfire1.wav            (Artillery fire sound)
+├── explosion.wav            (Explosion sound)
+├── siren.wav                (Scene 1 ambient)
+├── rain.wav                 (Scene 2 rain loop)
+├── truck.wav                (Truck engine loop)
+├── thunder.wav              (Thunder effect)
+└── copper.wav               (Helicopter rotor sound)
+```
+
+### Step 4 — Build Configuration
+
+In Visual Studio:
+- **Configuration:** `Debug` or `Release`
 - **Platform:** `x64`
 
-### Step 4 — Verify Linker Settings (if build errors occur)
+The `.vcxproj` file is pre-configured with:
+- Include paths for OpenGL, GLU, FreeGLUT, stb_image, and irrKlang
+- Linker dependencies: `opengl32.lib`, `glu32.lib`, `freeglut.lib`
+- Output directory: `x64/Debug/` or `x64/Release/`
 
-Go to **Project → Properties** and confirm:
-
-| Property Path | Expected Value |
-|---|---|
-| C/C++ → Additional Include Directories | `$(SolutionDir)externals\freeglut\include` |
-| Linker → Additional Library Directories | `$(SolutionDir)externals\freeglut\lib\x64` |
-| Linker → Additional Dependencies | `opengl32.lib; glu32.lib; freeglut.lib` |
-
-### Step 5 — Place the DLL (first run only)
-
-Copy `freeglut.dll` from `externals/freeglut/bin/x64/` into `x64/Debug/` alongside the compiled `.exe`, so Windows can locate it at runtime.
-
-### Step 6 — Build & Run
+### Step 5 — Build & Run
 
 - **Build:** `Ctrl + Shift + B`
-- **Run:** `Ctrl + F5`
+- **Run:** `Ctrl + F5` (runs without debugging)
 
-The simulation window launches and war effects begin rendering immediately.
+The application window launches and renders the selected scene with full audio-visual effects.
 
 ---
 
 ## 📦 Dependencies
 
-### OpenGL (`opengl32.lib`)
-The industry-standard, cross-platform GPU rendering API. On Windows it ships as part of the Windows SDK — no installation needed. Handles all draw calls: vertices, colors, transformations, and blending modes.
-
-### GLU — OpenGL Utility Library (`glu32.lib`)
-A companion to OpenGL providing higher-level helpers such as `gluOrtho2D()` for 2D projection setup. Also ships with Windows by default.
+### OpenGL (`opengl32.lib`, `glu32.lib`)
+The industry-standard GPU rendering API and utility library, both included in the Windows SDK. No external installation required. Handles all 2D/3D graphics submission, matrix transformations, and texture binding.
 
 ### FreeGLUT (`freeglut.lib` / `freeglut.dll`)
-The modern open-source replacement for the original GLUT library. Handles window creation, OpenGL context setup, and event dispatching (display, keyboard, mouse, idle, timer) through a clean callback API. Licensed under the **MIT License**.
+Modern open-source replacement for the original GLUT library. Manages:
+- Window creation and OpenGL context initialization
+- Input event dispatching (keyboard, mouse)
+- Display refresh and timer callbacks
+- Cross-platform abstraction
 
-- Official site: https://freeglut.sourceforge.net
-- GitHub: https://github.com/FreeGLUT/freeglut
+Bundled in `externals/freeglut/` — pre-linked in the `.vcxproj`.
+
+**License:** MIT License  
+**Link:** https://freeglut.sourceforge.net
+
+### irrKlang (`irrKlang.lib`)
+Real-time 3D audio engine providing:
+- 2D sound playback (`play2D()`)
+- Looping audio support
+- Multi-channel sound mixing
+- Low-latency audio processing
+
+Used in this project for all sound effects (explosions, gunfire, weather, ambient).
+
+**Link:** https://www.ambiera.com/irrklang/
+
+### stb_image (Header-only)
+Single-header image decoder library supporting PNG, JPG, BMP, and other formats. Used to load sprite textures at runtime without external image library dependencies.
+
+**License:** MIT / Public Domain  
+**Link:** https://github.com/nothings/stb
 
 ---
 
 ## 🔑 Key Concepts Demonstrated
 
-| Concept | Description |
+| Concept | Implementation |
 |---|---|
-| **OpenGL Primitive Drawing** | `glBegin` / `glEnd` with `GL_POINTS`, `GL_TRIANGLE_FAN`, `GL_QUADS` |
-| **GLUT Callback Architecture** | Display, idle, keyboard, mouse, and reshape callbacks |
+| **OpenGL Texture Mapping** | `glBindTexture()`, `glTexCoord2f()`, stb_image loading |
+| **2D Orthographic Projection** | `gluOrtho2D()` for direct screen-space rendering |
+| **GLUT Event-Driven Loop** | Display, timer, keyboard, and mouse callbacks |
 | **Double Buffering** | `GLUT_DOUBLE` + `glutSwapBuffers()` for flicker-free animation |
-| **2D Orthographic Projection** | `gluOrtho2D()` mapping screen coordinates via GLU |
-| **Particle System** | Per-frame spawn, update, and cull cycle for many entities |
-| **Alpha Blending** | `glBlendFunc()` for transparency, fade-out, and additive glow |
-| **Color Interpolation** | Per-particle RGBA transitioning over particle lifetime |
-| **Delta Time Animation** | Frame-rate independent movement using elapsed time |
-| **Vector Mathematics** | 2D velocity, gravity simulation, and positional arithmetic |
-| **STL Memory Management** | `std::vector` with erase-remove idiom for dead particle cleanup |
-| **Visual Studio Project Config** | OpenGL/GLUT include paths, linker inputs, x64 platform targeting |
+| **Sprite Animation** | Texture switching via `glDeleteTextures()` and `loadTexture()` on timers |
+| **Coordinate Transformations** | `glTranslatef()`, `glRotatef()` for object positioning and rotation |
+| **Alpha Blending** | `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)` for transparency |
+| **State Management** | Flags and timers managing animation sequences (`fireVisible`, `artilleryFireVisible`) |
+| **Multi-Scene Architecture** | Scene switching via keyboard input, state reset, audio stream management |
+| **Audio-Visual Synchronization** | Sound playback triggered by game events with millisecond precision |
+| **Particle-Like Systems** | Rain simulation with 500 individual raindrop structures |
+| **Fixed-Rate Update Loop** | 16ms timer callbacks for stable 60 FPS animation |
+| **Impact Effects** | Camera shake via random offset application during collision/explosion events |
+| **Timer-Based Animation** | GLUT timers triggering texture changes, animation delays, and event scheduling |
 
 ---
 
-## 📈 Potential Improvements
+## 📈 Future Enhancements
 
-- **Modern OpenGL (Core Profile)** — Replace legacy `glBegin/glEnd` (deprecated) with VAOs, VBOs, and GLSL shaders for dramatically better performance and visual quality
-- **GLSL Shaders** — Write custom vertex and fragment shaders to implement per-particle lighting, glow, distortion, and procedural noise effects on the GPU
-- **Texture-Mapped Particles** — Load smoke/fire `.png` textures and render textured quads for photorealistic effects instead of geometric shapes
-- **Mouse Interaction** — Spawn explosions at the cursor position using `glutMouseFunc`
-- **Multiple Effect Types** — Distinct profiles: muzzle flash, smoke column, shockwave ring, tracer rounds, debris scatter
-- **Sound Effects** — Integrate OpenAL for synchronized explosion audio
-- **FPS Counter** — Display real-time frame rate using GLUT's timer or `glutGet(GLUT_ELAPSED_TIME)`
+- **Modern OpenGL (Core Profile)** — Migrate from legacy immediate-mode (`glBegin`/`glEnd`) to vertex arrays (VAO/VBO) and GLSL shaders for improved performance and visual fidelity.
+- **GLSL Shaders** — Implement custom vertex/fragment shaders for advanced effects: bloom, distortion, per-sprite lighting, and procedural particle generation on the GPU.
+- **Particle System Expansion** — Replace the simple rain system with a full particle emitter supporting explosions, debris, smoke trails, and muzzle flashes with physics (gravity, wind).
+- **Advanced Audio** — Integrate OpenAL for spatial 3D audio positioning and dynamic audio mixing based on game state.
+- **UI Overlay** — Add on-screen HUD using bitmap fonts or texture-based text rendering for health, ammo, and scene information.
+- **Input Remapping** — Configurable keyboard/mouse bindings and gamepad support via raw input APIs.
+- **Performance Profiling** — GPU/CPU timing analysis using GLUT timers and performance counters to optimize rendering bottlenecks.
+- **Asset Pipeline** — Automated texture atlasing, sprite sheet optimization, and audio compression for faster load times.
+- **Network Multiplayer** — Synchronize game state over TCP/UDP for cooperative or competitive gameplay (would require significant architectural changes).
+
+---
+
+## � Portfolio & Showcase
+
+This project demonstrates advanced **C++ graphics programming** and real-time interactive systems design. It showcases:
+
+- Deep understanding of **OpenGL and GPU communication** at the API level
+- Practical **event-driven architecture** using GLUT callbacks
+- **Audio-visual synchronization** across multiple independent systems
+- Professional **project structure** and Visual Studio configuration
+- **Multi-threaded state management** (rendering loop vs. audio engine)
+
+Suitable for inclusion in technical portfolios, GitHub profiles, and resume projects demonstrating systems programming expertise.
 
 ---
 
 ## 👤 Author
 
-**Navin** — [@navinxqz](https://github.com/navinxqz)
+**navinxqz** — GitHub: [@navinxqz](https://github.com/navinxqz)
 
-Built as a computer graphics project to explore real-time rendering with OpenGL and GLUT, implementing visual war effects from first principles in C++.
+Built as a demonstration of real-time graphics and interactive simulation design using foundational graphics APIs.
 
 ---
 
 ## 📄 License
 
-This project is open-source. FreeGLUT is licensed under the [MIT License](https://opensource.org/licenses/MIT). OpenGL and GLU are part of the Windows SDK and are royalty-free.
-
----
-
-## 🏷️ Tags
-
-`C++` `OpenGL` `GLUT` `FreeGLUT` `GLU` `Particle System` `Real-Time Rendering` `Computer Graphics` `Visual Effects` `2D Graphics` `Visual Studio` `Windows` `Game Programming`
+This project is provided as-is for educational and demonstration purposes. FreeGLUT is licensed under the [MIT License](https://opensource.org/licenses/MIT). OpenGL and GLU are part of the Windows SDK and are available royalty-free.
