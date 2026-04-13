@@ -17,23 +17,23 @@ int missileImgWidth, missileImgHeight;
 int copperImgWidth, copperImgHeight;
 int fireImgWidth, fireImgHeight;
 int artilleryImgWidth, artilleryImgHeight;
-int truckImgWidth, truckImgHeight;
+int truckImgWidth_N, truckImgHeight_N;
 int scene3ImgWidth, scene3ImgHeight;
 
 int current = 1;
 ISoundEngine* engine = nullptr;
 
-// Tank variables
+// Tank variables (OBJ1)
 float tankX = 1.1f, tankY = 0.18f;
-float newTankX = 1.4f, newTankY = 0.18f;
+float newTankX = 1.4f, newTankY = 0.18f; //(OBJ12)
 float tankSpeedX = -0.002f, tankSpeedY = -0.00105f;
 bool stop = false;
 
-// Tank fire
+// Tank fire (OBJ2)
 float fireOffsetX = -0.1f, fireOffsetY = 0.12f;
 bool fireVisible = false;
 
-// Missile variables
+// Missile variables (OBJ3)
 bool missileLaunched = false;
 float missileStartX = 1.2f, missileStartY = -0.3f;
 float missileTargetX = -0.2f, missileTargetY = 0.4f;
@@ -42,15 +42,15 @@ float missileX = -1.2f, missileY = 0.3f;
 float missileSpeedX = 0.018f, missileSpeedY = 0.013f;
 bool missileVisible = true;
 
-// Copper variables
+// Copper variables (OBJ4)
 float copperX = -0.9f, copperY = -0.1f;
 float copperSpeedX = 0.004, copperSpeedY = 0.0035f;
 float rotorAngle = 0.0f;
 
-// Artillery gun variables
+// Artillery gun variables (OBJ5)
 float artilleryX = -0.0f, artilleryY = -0.8f;
 
-// Artillery fire
+// Artillery fire (OBJ6)
 bool artilleryFireVisible = false;
 float artilleryFireOffsetX = -0.15f, artilleryFireOffsetY = 0.15f;
 
@@ -60,14 +60,15 @@ float cameraShakeOffsetY = 0.0f;
 int cameraShakeFramesLeft = 0;
 const int maxShakeFrames = 6;
 
-//truck variables
+//truck variables (OBJ7)
 float truckX = 0.9f, truckY = -0.0f;
-float truckSpeedX = 0.004f, truckSpeedY = 0.003f;
-//blast
+float truckSpeedX = 0.008f, truckSpeedY = 0.003f;
+//blast (OBj8)
 bool explosionActive = false;
 float explosionX = 0.0f, explosionY = 0.0f;
 int explosionDuration = 5000;
 
+//Rain (OBJ9)
 const int NUM_RAINDROPS = 500;
 struct Raindrop {
     float x, y;
@@ -75,13 +76,13 @@ struct Raindrop {
 };
 Raindrop raindrops[NUM_RAINDROPS];
 
-//thunder
+//thunder (OBJ10)
 bool thunderActive = false;
 int thunderDuration = 150;
-int thunderCooldown = 9000;
+int thunderCooldown = 3000;
 int nextThunderTime = 0;
 
-// Light cone control
+// Light cone control (OBJ11)
 float lightStartX = -0.45f;
 float lightStartY = -0.21f;
 float lightEndY = -0.8f;
@@ -146,7 +147,18 @@ void drawRain() {
     glEnd();
     glEnable(GL_TEXTURE_2D);
 }
-void updateRain() {
+//void drawSplash() {
+//    glColor3f(0.7f, 0.7f, 1.0f);
+//    glPointSize(2.0f);
+//    glBegin(GL_POINTS);
+//    for (int i = 0; i < NUM_RAINDROPS; ++i) {
+//        if (raindrops[i].y < -0.95f) {
+//            glVertex2f(raindrops[i].x, -0.95f);
+//        }
+//    }
+//    glEnd();
+//}
+void updateRain() { //ANM1
     for (int i = 0; i < NUM_RAINDROPS; i++) {
         raindrops[i].x += raindrops[i].speedX;
         raindrops[i].y -= raindrops[i].speedY;
@@ -159,7 +171,7 @@ void updateRain() {
         }
     }
 }
-void toggleLightCone(int value) {
+void toggleLightCone(int value) { //ANM2
     if (blinkCount < maxBlinks) {
         lightConeVisible = !lightConeVisible;
         blinkCount++;
@@ -194,7 +206,7 @@ void drawLightCone() {
     glPopAttrib();
 }
 
-void triggerCameraShake(int numFrames) {
+void triggerCameraShake(int numFrames) { //ANM3
     cameraShakeOffsetX = ((float)rand() / RAND_MAX - 0.5f) * 0.04f;
     cameraShakeOffsetY = ((float)rand() / RAND_MAX - 0.5f) * 0.02f;
     cameraShakeFramesLeft = numFrames;
@@ -203,7 +215,7 @@ void hideMissile(int value) {
     missileVisible = false;
     engine->play2D("assets/explosion.wav", false);
 }
-void startExplosion(float x, float y) {
+void startExplosion(float x, float y) { //ANM4
     explosionActive = true;
     explosionX = x;
     explosionY = y;
@@ -215,6 +227,22 @@ void startExplosion(float x, float y) {
         explosionActive = false;
         glutPostRedisplay();
         }, 0);
+}
+void drawJeep() {
+    glPushMatrix();
+    glTranslatef(newTankX, newTankY, 0.0f);
+    glBindTexture(GL_TEXTURE_2D, newTankTexture);
+    float newTankAspect = (float)newTankImgWidth / (float)newTankImgHeight;
+    float newTankDisplayWidth = 0.22f;
+    float newTankDisplayHeight = newTankDisplayWidth / newTankAspect;
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(-newTankDisplayWidth / 2, -newTankDisplayHeight / 2);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(newTankDisplayWidth / 2, -newTankDisplayHeight / 2);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(newTankDisplayWidth / 2, newTankDisplayHeight / 2);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(-newTankDisplayWidth / 2, newTankDisplayHeight / 2);
+    glEnd();
+    glPopMatrix();
 }
 
 void display() {
@@ -246,6 +274,7 @@ void display() {
 
     if (current == 2) {
         drawRain();
+        //drawSplash();
         drawLightCone();
     }
 
@@ -285,6 +314,7 @@ void display() {
         glPopMatrix();
 
         // Draw jeep
+        drawJeep();
         glPushMatrix();
         glTranslatef(newTankX, newTankY, 0.0f);
         glBindTexture(GL_TEXTURE_2D, newTankTexture);
@@ -304,15 +334,15 @@ void display() {
         glPushMatrix();
         glTranslatef(truckX, truckY, 0.0f);
         glBindTexture(GL_TEXTURE_2D, truckTexture);
-        float truckAspect = (float)truckImgWidth / (float)truckImgHeight;
-        float truckDisplayWidth = 0.3f;
-        float truckDisplayHeight = truckDisplayWidth / truckAspect;
+        float truckAspect_N = (float)truckImgWidth_N / (float)truckImgHeight_N;
+        float truckDisplayWidth_N = 0.3f;
+        float truckDisplayHeight_N = truckDisplayWidth_N / truckAspect_N;
 
         glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f); glVertex2f(-truckDisplayWidth / 2, -truckDisplayHeight / 2);
-        glTexCoord2f(1.0f, 0.0f); glVertex2f(truckDisplayWidth / 2, -truckDisplayHeight / 2);
-        glTexCoord2f(1.0f, 1.0f); glVertex2f(truckDisplayWidth / 2, truckDisplayHeight / 2);
-        glTexCoord2f(0.0f, 1.0f); glVertex2f(-truckDisplayWidth / 2, truckDisplayHeight / 2);
+        glTexCoord2f(0.0f, 0.0f); glVertex2f(-truckDisplayWidth_N / 2, -truckDisplayHeight_N / 2);
+        glTexCoord2f(1.0f, 0.0f); glVertex2f(truckDisplayWidth_N / 2, -truckDisplayHeight_N / 2);
+        glTexCoord2f(1.0f, 1.0f); glVertex2f(truckDisplayWidth_N / 2, truckDisplayHeight_N / 2);
+        glTexCoord2f(0.0f, 1.0f); glVertex2f(-truckDisplayWidth_N / 2, truckDisplayHeight_N / 2);
         glEnd();
         glPopMatrix();
 
@@ -447,7 +477,22 @@ void playTruckSound() {
 void playWarSound() {
     //engine->play2D("assets/Warfare.wav", true);
 }
-void update(int value) {
+void updateThunder() { //ANM6
+    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+    if (!thunderActive && currentTime >= nextThunderTime) {
+        thunderActive = true;
+        triggerCameraShake(maxShakeFrames);
+        engine->play2D("assets/thunder.wav", false);
+
+        glutTimerFunc(thunderDuration, [](int) {
+            thunderActive = false;
+            glutPostRedisplay();
+            }, 0);
+
+        nextThunderTime = currentTime + thunderCooldown + rand() % 2000;
+    }
+}
+void update(int value) { //ANM5
     if (current == 2) {
         updateRain();
         truckX += truckSpeedX;
@@ -458,22 +503,7 @@ void update(int value) {
             truckY = -1.4f;
         }
         // Thunder logic
-        int currentTime = glutGet(GLUT_ELAPSED_TIME);
-        if (!thunderActive && currentTime >= nextThunderTime) {
-            thunderActive = true;
-            triggerCameraShake(maxShakeFrames); // optional shake effect
-            engine->play2D("assets/thunder.wav", false); // make sure thunder.wav exists
-
-            // Turn off thunder after some time
-            glutTimerFunc(thunderDuration, [](int) {
-                thunderActive = false;
-                glutPostRedisplay();
-                }, 0);
-
-            // Set next thunder after random cooldown
-            nextThunderTime = currentTime + thunderCooldown + rand() % 2000; // some randomness
-        }
-
+        updateThunder();
     }
     if (current == 1 || current==3) {
         newTankX += tankSpeedX;
@@ -646,7 +676,7 @@ void init() {
     fireTexture = loadTexture("./assets/TankFire1.png", &fireImgWidth, &fireImgHeight);
     artilleryTexture = loadTexture("./assets/artillery-gun.png", &artilleryImgWidth, &artilleryImgHeight);
     newTankTexture = loadTexture("./assets/jeep.png", &newTankImgWidth, &newTankImgHeight);
-    truckTexture = loadTexture("./assets/truck.png", &truckImgWidth, &truckImgHeight);
+    truckTexture = loadTexture("./assets/truck.png", &truckImgWidth_N, &truckImgHeight_N);
 
     glutKeyboardFunc(keyboard);
     glutMouseFunc(mouse);
